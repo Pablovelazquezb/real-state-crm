@@ -9,12 +9,12 @@ import { fetchAccountData } from '../../redux/slices/accountSlice';
 import { toast } from 'react-toastify';
 
 const AccountModel = (props) => {
-    const { onClose, isOpen, fieldName, setFieldValue, isLoding, setIsLoding, data } = props
+    const { onClose, isOpen, fieldName, setFieldValue, data } = props
     const title = "Account";
     const dispatch = useDispatch();
     // const [data, setData] = useState([]);
 
-    // const [isLoding, setIsLoding] = useState(false);
+    const [isLoding, setIsLoding] = useState(false);
     const [leadData, setLeadData] = useState([]);
     const [selectedValues, setSelectedValues] = useState([]);
 
