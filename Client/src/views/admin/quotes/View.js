@@ -223,7 +223,7 @@ const View = (props) => {
                                 <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Opportunity</Text>
                                 {
                                     data?.oppotunity ?
-                                        <Link to={`/accountView/${data?.oppotunity}`}>
+                                        <Link to={`/opportunitiesView/${data?.oppotunity}`}>
                                             <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }} style={{ cursor: "pointer" }}>{data?.oppotunityName ? data?.oppotunityName : ' - '}</Text>
                                         </Link>
                                         :
@@ -420,6 +420,30 @@ const View = (props) => {
                                 }
                             </GridItem>
                             <GridItem colSpan={{ base: 2, md: 1 }} >
+                                <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}>Account</Text>
+                                {
+                                    data?.account ?
+                                        <Link to={`/accountView/${data?.account}`}>
+                                            <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }} style={{ cursor: "pointer" }}>{data?.accountName ? data?.accountName : ' - '}</Text>
+                                        </Link>
+                                        :
+                                        <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }}>{data?.accountName ? data?.accountName : ' - '}</Text>
+
+                                }
+                            </GridItem>
+                            <GridItem colSpan={{ base: 2, md: 1 }} >
+                                <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}>Contact</Text>
+                                {
+                                    data?.contact ?
+                                        <Link to={`/contactView/${data?.contact}`}>
+                                            <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }} style={{ cursor: "pointer" }}>{data?.contactName ? data?.contactName : ' - '}</Text>
+                                        </Link>
+                                        :
+                                        <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }}>{data?.contactName ? data?.contactName : ' - '}</Text>
+
+                                }
+                            </GridItem>
+                            <GridItem colSpan={{ base: 2, md: 1 }} >
                                 <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}>Billing Street</Text>
                                 {
                                     editableField === "billingStreet" ?
@@ -613,7 +637,7 @@ const View = (props) => {
                                 }
                             </GridItem>
 
-                            <GridItem colSpan={{ base: 2, md: 1 }} >
+                            {/* <GridItem colSpan={{ base: 2, md: 1 }} >
                                 <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}>Currency</Text>
                                 {
                                     editableField === "currency" ?
@@ -634,9 +658,20 @@ const View = (props) => {
                                         :
                                         <Text onDoubleClick={() => handleDoubleClick("currency", data?.currency, "Currency")}>{data?.currency ? data?.currency : ' - '}</Text>
                                 }
+                            </GridItem> */}
+
+                            <GridItem colSpan={{ base: 2, md: 1 }} >
+                                <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Assigned To</Text>
+                                {
+                                    data?.assignedTo ?
+                                        <Link to={`/userView/${data?.assignedTo}`}>
+                                            <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }} style={{ cursor: "pointer" }}>{data?.assignUserName ? data?.assignUserName : ' - '}</Text>
+                                        </Link>
+                                        :
+                                        <Text color={contactAccess?.view ? 'blue.500' : 'blackAlpha.900'} sx={{ '&:hover': { color: contactAccess?.view ? 'blue.500' : 'blackAlpha.900', textDecoration: contactAccess?.view ? 'underline' : 'none' } }}>{data?.assignUserName ? data?.assignUserName : ' - '}</Text>
+
+                                }
                             </GridItem>
-
-
                             <GridItem colSpan={{ base: 2, md: 1 }} >
                                 <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}>Total</Text>
                                 {
@@ -767,7 +802,7 @@ const View = (props) => {
                                             <Text mb='10px' color={'red'}> {formik?.errors.grandTotal && formik?.touched.grandTotal && formik?.errors.grandTotal}</Text>
                                         </>
                                         :
-                                        <Text onDoubleClick={() => handleDoubleClick("grandTotal", data?.grandTotal, "Grand Total")}>{data?.grandTotal ? data?.grandTotal : ' - '}</Text>
+                                        <Text onDoubleClick={() => handleDoubleClick("grandTotal", data?.grandTotal, "Grand Total")}>{`${data?.currency}${data?.grandTotal ? data?.grandTotal : ' - '}`}</Text>
                                 }
                             </GridItem>
 

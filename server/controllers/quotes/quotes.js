@@ -117,8 +117,17 @@ const edit = async (req, res) => {
 };
 const addMany = async (req, res) => {
     try {
-        const data = req.body;
-        const inserted = await Quotes.insertMany(data);
+        // const data = {
+        //     ...req.body,
+        //     account: new mongoose.Types.ObjectId(req.body.account),
+        //     contact: new mongoose.Types.ObjectId(req.body.contact),
+        // };
+        // const d = req.body.map((item) => ({
+        //     ...item,
+        //     account: new mongoose.Types.ObjectId(item.account),
+        //     contact: new mongoose.Types.ObjectId(item.contact),
+        // }))
+        const inserted = await Quotes.insertMany(req.body);
 
         res.status(200).json(inserted);
     } catch (err) {
@@ -191,8 +200,8 @@ const view = async (req, res) => {
                 $addFields: {
                     assignUserName: {
                         $cond: {
-                            if: '$assignUsers',
-                            then: { $concat: ['$assignUsers.firstName', ' ', '$assignUsers.lastName'] },
+                            if: '$assignedToData',
+                            then: { $concat: ['$assignedToData.firstName', ' ', '$assignedToData.lastName'] },
                             else: { $concat: [''] }
                         }
                     },

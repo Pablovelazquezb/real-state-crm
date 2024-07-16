@@ -133,7 +133,7 @@ const Index = (props) => {
                         fontSize="sm"
                         fontWeight="700"
                     >
-                        {cell?.row?.original?.contactName}
+                        {cell?.row?.original?.contactName ? cell?.row?.original?.contactName : "-"}
                     </Text>
                 </div>
             )
@@ -150,7 +150,7 @@ const Index = (props) => {
                         fontSize="sm"
                         fontWeight="700"
                     >
-                        {cell?.row?.original?.accountName}
+                        {cell?.row?.original?.accountName ? cell?.row?.original?.accountName : "-"}
                     </Text>
                 </div>
             )
@@ -158,6 +158,14 @@ const Index = (props) => {
         {
             Header: "Grand Total",
             accessor: "grandTotal",
+            cell: (cell) => (
+                <div className="selectOpt">
+                    <Text
+                    >
+                        {`${cell?.row?.original?.currency}${cell?.row?.original?.grandTotal}`}
+                    </Text>
+                </div>
+            )
         },
         {
             Header: "valid Until",
