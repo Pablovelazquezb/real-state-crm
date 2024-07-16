@@ -64,7 +64,7 @@ const CommonCheckTable = (props) => {
     const searchedDataOut = useSelector((state) => state?.advanceSearchData?.searchResult)
     const searchValue = useSelector((state) => state?.advanceSearchData?.searchValue)
     const getTagValues = useSelector((state) => state?.advanceSearchData?.getTagValues)
-    const data = useMemo(() => (AdvanceSearch ? searchDisplay : displaySearchData) ? (AdvanceSearch ? searchedDataOut : searchedData) : allData, [(AdvanceSearch ? searchDisplay : displaySearchData) ? (AdvanceSearch ? searchedDataOut : searchedData) : allData]);
+    const data = useMemo(() => (AdvanceSearch ? searchDisplay : displaySearchData) ? (AdvanceSearch ? searchedDataOut : searchedData) : allData, [searchDisplay, displaySearchData, AdvanceSearch, searchedDataOut, searchedData, allData]);
 
     const [manageColumnsModel, setManageColumnsModel] = useState(false);
     const [csvColumns, setCsvColumns] = useState([]);
