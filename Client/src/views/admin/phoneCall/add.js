@@ -292,7 +292,7 @@ const AddPhoneCall = (props) => {
                           return (
                             <option value={item._id} key={item._id}>
                               {values.category === "Contact"
-                                ? `${item.firstName} ${item.lastName}`
+                                ? `${item.fullName}`
                                 : item.leadName}
                             </option>
                           );
