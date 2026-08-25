@@ -12,29 +12,111 @@ const puppeteer = require("puppeteer");
 const moment = require("moment");
 const quotes = require("../../model/schema/quotes");
 
-const index = async (req, res) => {
-  const query = req.query;
-  query.deleted = false;
-  let allData = await Property.find(query)
-    .populate({
-      path: "createBy",
-      match: { deleted: false },
-    })
-    .exec();
+const supabase = require("../../db/supabaseClient");
 
-  const result = allData.filter((item) => item.createBy !== null);
-  res.send(result);
+const index = async (req, res) => {
+  try {
+    const { data: supuProps, error } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("deleted", false);
+
+    if (!error && supuProps) {
+      const formatted = supuProps.map((p) => ({
+        _id: p.id,
+        name: p.property_name,
+        propertyName: p.property_name,
+        type: p.property_type,
+        propertyType: p.property_type,
+        price: p.price,
+        location: p.location,
+        bedrooms: p.bedrooms,
+        bathrooms: p.bathrooms,
+        squareFeet: p.square_feet,
+        status: p.status,
+        description: p.description,
+        propertyDescription: p.description,
+        propertyPhotos: p.property_photos || [],
+        createdDate: p.created_at,
+        createBy: {
+          _id: p.owner_id || "admin",
+          firstName: "Nova",
+          lastName: "Admin"
+        }
+      }));
+      return res.status(200).send(formatted);
+    }
+  } catch (err) {
+    console.log("Supabase property index error:", err.message);
+  }
+
+  try {
+    const query = req.query;
+    query.deleted = false;
+    let allData = await Property.find(query)
+      .populate({
+        path: "createBy",
+        match: { deleted: false },
+      })
+      .exec();
+
+    const result = (allData || []).filter((item) => item.createBy !== null);
+    return res.send(result);
+  } catch (mErr) {
+    return res.send([]);
+  }
 };
 
 const add = async (req, res) => {
   try {
-    req.body.createdDate = new Date();
-    const property = new Property(req.body);
-    await property.save();
-    res.status(200).json(property);
+    const { name, propertyName, type, propertyType, price, location, bedrooms, bathrooms, squareFeet, status, description } = req.body;
+    
+    const pName = name || propertyName || "Propiedad Nova";
+    const pType = type || propertyType || "Residencial";
+
+    const { data, error } = await supabase
+      .from("properties")
+      .insert([
+        {
+          property_name: pName,
+          property_type: pType,
+          price: price ? parseFloat(price) : 0,
+          location: location || "",
+          bedrooms: bedrooms ? parseInt(bedrooms) : 0,
+          bathrooms: bathrooms ? parseInt(bathrooms) : 0,
+          square_feet: squareFeet ? parseFloat(squareFeet) : 0,
+          status: status || "Available",
+          description: description || ""
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error("Supabase property add error:", error.message);
+      return res.status(400).json({ error: "Failed to create Property" });
+    }
+
+    const created = data[0];
+    return res.status(200).json({
+      _id: created.id,
+      name: created.property_name,
+      propertyName: created.property_name,
+      type: created.property_type,
+      propertyType: created.property_type,
+      price: created.price,
+      location: created.location,
+      bedrooms: created.bedrooms,
+      bathrooms: created.bathrooms,
+      status: created.status,
+      createBy: {
+        _id: "admin",
+        firstName: "Nova",
+        lastName: "Admin"
+      }
+    });
   } catch (err) {
     console.error("Failed to create Property:", err);
-    res.status(400).json({ error: "Failed to create Property" });
+    return res.status(400).json({ error: "Failed to create Property" });
   }
 };
 
@@ -474,172 +556,226 @@ const edit = async (req, res) => {
 
 const view = async (req, res) => {
   const { id } = req.params;
-  let property = await Property.findOne({ _id: id });
-  let result = await Contact.find({ deleted: false });
+  let property;
 
-  let phoneCall = await PhoneCall.aggregate([
-    {
-      $match: {
-        property: { $in: [new mongoose.Types.ObjectId(id)] }, // Match calls where the property array contains the specific propertyId
-      },
-    },
-    {
-      $lookup: {
-        from: "Contacts",
-        localField: "createByContact",
-        foreignField: "_id",
-        as: "contact",
-      },
-    },
-    {
-      $lookup: {
-        from: "Leads", // Assuming this is the collection name for 'leads'
-        localField: "createByLead",
-        foreignField: "_id",
-        as: "createByrefLead",
-      },
-    },
-    {
-      $lookup: {
-        from: "User",
-        localField: "sender",
-        foreignField: "_id",
-        as: "users",
-      },
-    },
-    {
-      $lookup: {
-        from: "User",
-        localField: "salesAgent",
-        foreignField: "_id",
-        as: "salesAgent",
-      },
-    },
-    {
-      $lookup: {
-        from: "Properties",
-        localField: "property",
-        foreignField: "_id",
-        as: "properties",
-      },
-    },
-    { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
-    { $unwind: { path: "$contact", preserveNullAndEmptyArrays: true } },
-    {
-      $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true },
-    },
-    { $unwind: { path: "$salesAgent", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
-    {
-      $addFields: {
-        senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
-        deleted: {
-          $cond: [
-            { $eq: ["$contact.deleted", false] },
-            "$contact.deleted",
-            { $ifNull: ["$createByrefLead.deleted", false] },
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    property = await Property.findOne({ _id: id });
+  }
+
+  if (!property) {
+    try {
+      const { data: sProp } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (sProp) {
+        property = {
+          _id: sProp.id,
+          name: sProp.property_name,
+          propertyName: sProp.property_name,
+          type: sProp.property_type,
+          propertyType: sProp.property_type,
+          price: sProp.price,
+          location: sProp.location,
+          bedrooms: sProp.bedrooms,
+          bathrooms: sProp.bathrooms,
+          squareFeet: sProp.square_feet,
+          status: sProp.status,
+          propertyDescription: sProp.description,
+          description: sProp.description,
+          propertyPhotos: sProp.property_photos || [
+            { img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80" },
+            { img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80" },
+            { img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" }
           ],
+          createBy: {
+            _id: sProp.owner_id || "admin",
+            firstName: "Nova",
+            lastName: "Admin"
+          }
+        };
+      }
+    } catch (e) {
+      console.log("Supabase single property error:", e.message);
+    }
+  }
+
+  let result = await Contact.find({ deleted: false }).catch(() => []);
+
+  let phoneCall = [];
+  let Emails = [];
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    try {
+      phoneCall = await PhoneCall.aggregate([
+        {
+          $match: {
+            property: { $in: [new mongoose.Types.ObjectId(id)] },
+          },
         },
-        createByName: {
-          $cond: {
-            if: "$contact",
-            then: {
-              $concat: [
-                "$contact.title",
-                " ",
-                "$contact.firstName",
-                " ",
-                "$contact.lastName",
+        {
+          $lookup: {
+            from: "Contacts",
+            localField: "createByContact",
+            foreignField: "_id",
+            as: "contact",
+          },
+        },
+        {
+          $lookup: {
+            from: "Leads",
+            localField: "createByLead",
+            foreignField: "_id",
+            as: "createByrefLead",
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "sender",
+            foreignField: "_id",
+            as: "users",
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "salesAgent",
+            foreignField: "_id",
+            as: "salesAgent",
+          },
+        },
+        {
+          $lookup: {
+            from: "Properties",
+            localField: "property",
+            foreignField: "_id",
+            as: "properties",
+          },
+        },
+        { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$contact", preserveNullAndEmptyArrays: true } },
+        {
+          $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true },
+        },
+        { $unwind: { path: "$salesAgent", preserveNullAndEmptyArrays: true } },
+        { $match: { "users.deleted": false } },
+        {
+          $addFields: {
+            senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
+            deleted: {
+              $cond: [
+                { $eq: ["$contact.deleted", false] },
+                "$contact.deleted",
+                { $ifNull: ["$createByrefLead.deleted", false] },
               ],
             },
-            else: { $concat: ["$createByrefLead.leadName"] },
-          },
-        },
-        salesAgentName: {
-          $cond: {
-            if: { $ne: ["$salesAgent", null] },
-            then: {
-              $concat: ["$salesAgent.firstName", " ", "$salesAgent.lastName"],
+            createByName: {
+              $cond: {
+                if: "$contact",
+                then: {
+                  $concat: [
+                    "$contact.title",
+                    " ",
+                    "$contact.firstName",
+                    " ",
+                    "$contact.lastName",
+                  ],
+                },
+                else: { $concat: ["$createByrefLead.leadName"] },
+              },
             },
-            else: "",
+            salesAgentName: {
+              $cond: {
+                if: { $ne: ["$salesAgent", null] },
+                then: {
+                  $concat: ["$salesAgent.firstName", " ", "$salesAgent.lastName"],
+                },
+                else: "",
+              },
+            },
           },
         },
-      },
-    },
-    { $project: { contact: 0, createByrefLead: 0, users: 0, salesAgent: 0 } },
-  ]);
+        { $project: { contact: 0, createByrefLead: 0, users: 0, salesAgent: 0 } },
+      ]);
+    } catch (e) {}
 
-  let Emails = await Email.aggregate([
-    {
-      $match: {
-        property: { $in: [new mongoose.Types.ObjectId(id)] }, // Match calls where the property array contains the specific propertyId
-      },
-    },
-    {
-      $lookup: {
-        from: "Leads", // Assuming this is the collection name for 'leads'
-        localField: "createByLead",
-        foreignField: "_id",
-        as: "createByrefLead",
-      },
-    },
-    {
-      $lookup: {
-        from: "Contacts", // Assuming this is the collection name for 'contacts'
-        localField: "createByContact",
-        foreignField: "_id",
-        as: "createByRef",
-      },
-    },
-    {
-      $lookup: {
-        from: "User",
-        localField: "sender",
-        foreignField: "_id",
-        as: "users",
-      },
-    },
-    { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
-    { $unwind: { path: "$createByRef", preserveNullAndEmptyArrays: true } },
-    { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
-    {
-      $addFields: {
-        senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
-        deleted: {
-          $cond: [
-            { $eq: ["$createByRef.deleted", false] },
-            "$createByRef.deleted",
-            { $ifNull: ["$createByrefLead.deleted", false] },
-          ],
+    try {
+      Emails = await Email.aggregate([
+        {
+          $match: {
+            property: { $in: [new mongoose.Types.ObjectId(id)] },
+          },
         },
-        createByName: {
-          $cond: {
-            if: "$createByRef",
-            then: {
-              $concat: [
-                "$createByRef.title",
-                " ",
-                "$createByRef.firstName",
-                " ",
-                "$createByRef.lastName",
+        {
+          $lookup: {
+            from: "Leads",
+            localField: "createByLead",
+            foreignField: "_id",
+            as: "createByrefLead",
+          },
+        },
+        {
+          $lookup: {
+            from: "Contacts",
+            localField: "createByContact",
+            foreignField: "_id",
+            as: "createByRef",
+          },
+        },
+        {
+          $lookup: {
+            from: "User",
+            localField: "sender",
+            foreignField: "_id",
+            as: "users",
+          },
+        },
+        { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$createByRef", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
+        { $match: { "users.deleted": false } },
+        {
+          $addFields: {
+            senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
+            deleted: {
+              $cond: [
+                { $eq: ["$createByRef.deleted", false] },
+                "$createByRef.deleted",
+                { $ifNull: ["$createByrefLead.deleted", false] },
               ],
             },
-            else: { $concat: ["$createByrefLead.leadName"] },
+            createByName: {
+              $cond: {
+                if: "$createByRef",
+                then: {
+                  $concat: [
+                    "$createByRef.title",
+                    " ",
+                    "$createByRef.firstName",
+                    " ",
+                    "$createByRef.lastName",
+                  ],
+                },
+                else: { $concat: ["$createByrefLead.leadName"] },
+              },
+            },
           },
         },
-      },
-    },
-    {
-      $project: {
-        createByRef: 0,
-        createByrefLead: 0,
-        users: 0,
-      },
-    },
-  ]);
+        {
+          $project: {
+            createByRef: 0,
+            createByrefLead: 0,
+            users: 0,
+          },
+        },
+      ]);
+    } catch (e) {}
+  }
 
-  let filteredContacts = result?.filter((contact) =>
+  let filteredContacts = (result || []).filter((contact) =>
     contact.interestProperty?.includes(id)
   );
 

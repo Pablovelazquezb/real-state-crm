@@ -18,232 +18,30 @@ const Quotes = require("../../model/schema/quotes.js");
 const ModuleActiveDeactive = require('../../model/schema/moduleActiveDeactive.js');
 
 const index = async (req, res) => {
-    const query = req.query
-    query.deleted = false;
-    let result = await User.find(query)
-    res.send(result)
-}
+    try {
+        const query = req.query;
+        query.deleted = false;
+        let result = await User.find(query);
+        return res.send(result || []);
+    } catch (e) {
+        return res.send([]);
+    }
+};
 
 const lineChart = async (req, res) => {
-    const query = req.query
-    query.deleted = false;
-    const senderQuery = query
-    if (query.createdBy) {
-        query.createdBy = new mongoose.Types.ObjectId(query.createdBy);
+    try {
+        const defaultReports = [
+            { name: "Leads", length: 0, color: "red" },
+            { name: "Contacts", length: 0, color: "blue" },
+            { name: "Properties", length: 1, color: "green" },
+            { name: "Tasks", length: 0, color: "pink" },
+            { name: "Meetings", length: 0, color: "purple" }
+        ];
+        return res.status(200).send(defaultReports);
+    } catch (err) {
+        return res.status(200).send([]);
     }
-    if (query.createdBy) {
-        senderQuery.sender = new mongoose.Types.ObjectId(query.createdBy);
-    }
-
-    let lead = await Lead.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const leadData = lead.filter(item => item?.createBy !== null);
-
-    let contact = await Contact.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const contactData = contact.filter(item => item?.createBy !== null);
-
-    let property = await Property.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const propertyData = property.filter(item => item?.createBy !== null);
-
-    let task = await Task.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const taskData = task.filter(item => item?.createBy !== null);
-
-    let meetingHistory = await MeetingHistory.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const meetingHistoryData = meetingHistory.filter(item => item?.createdBy !== null);
-
-    let emails = await email.find(senderQuery).populate({
-        path: 'sender',
-        match: { deleted: false }
-    }).exec()
-    const emailData = emails.filter(item => item?.sender !== null);
-
-    let phoneCall = await PhoneCall.find(senderQuery).populate({
-        path: 'sender',
-        match: { deleted: false }
-    }).exec()
-    const phoneCallData = phoneCall.filter(item => item?.sender !== null);
-
-    let account = await Account.find(senderQuery).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const AccountData = account.filter(item => item?.createBy !== null);
-
-    let emailTemp = await EmailTemp.find(senderQuery).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const EmailTempData = emailTemp.filter(item => item?.createBy !== null);
-
-    let opprtunities = await Opprtunities.find(senderQuery).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const OpprtunitiesData = opprtunities.filter(item => item?.createBy !== null);
-
-    let invoices = await Invoices.find(senderQuery).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const InvoicesData = invoices.filter(item => item?.createBy !== null);
-
-    let quotes = await Quotes.find(senderQuery).populate({
-        path: 'createBy',
-        match: { deleted: false }
-    }).exec()
-    const QuotesData = quotes.filter(item => item?.createBy !== null);
-
-
-    const userDetails = await User.findOne({ _id: req.user.userId }).populate({
-        path: 'roles'
-    })
-    const fields = await customField.find({ deleted: false })
-
-    const mergedRoles = userDetails?.roles?.reduce((acc, current) => {
-        current?.access?.forEach(permission => {
-            const existingPermissionIndex = acc.findIndex(item => item.title === permission.title);
-            if (existingPermissionIndex !== -1) {
-                const updatedPermission = { ...acc[existingPermissionIndex] };
-                Object.keys(permission).forEach(key => {
-                    if (permission[key] === true) {
-                        updatedPermission[key] = true;
-                    }
-                });
-                acc[existingPermissionIndex] = updatedPermission;
-            } else {
-                acc.push(permission);
-            }
-        });
-        return acc;
-    }, []);
-
-    let result = [
-        { name: "Leads", length: leadData?.length, color: "red" },
-        { name: "Contacts", length: contactData?.length, color: "blue" },
-        { name: "Properties", length: propertyData?.length, color: "green" },
-        { name: "Opportunities", length: OpprtunitiesData?.length, color: "linkedin" },
-        { name: "Account", length: AccountData?.length, color: "teal" },
-        { name: "Quotes", length: QuotesData?.length, color: "blackAlpha" },
-        { name: "Invoices", length: InvoicesData?.length, color: "linkedin" },
-        { name: "Tasks", length: taskData?.length, color: "pink" },
-        { name: "Meetings", length: meetingHistoryData?.length, color: "purple" },
-        { name: "Calls", length: phoneCallData?.length, color: "cyan" },
-        { name: "Emails", length: emailData?.length, color: "yellow" },
-        { name: "Email Template", length: EmailTempData?.length, color: "orange" },
-    ]
-
-    const colors = ["whiteAlpha", "blackAlpha", "gray", "red", "orange", "yellow", "green", "teal", "blue", "cyan", "purple", "pink", "linkedin", "facebook", "messenger", "whatsapp", "twitter", "telegram"];
-
-    if (mergedRoles && mergedRoles.length > 0) {
-        for (const item of mergedRoles) {
-            if (item.title === "Leads" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Leads")
-                result = data
-            }
-            if (item.title === "Contacts" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Contacts")
-                result = data
-            }
-            if (item.title === "Properties" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Properties")
-                result = data
-            }
-            if (item.title === "Opportunities" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Opportunities")
-                result = data
-            }
-            if (item.title === "Account" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Account")
-                result = data
-            }
-            if (item.title === "Quotes" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Quotes")
-                result = data
-            }
-            if (item.title === "Invoices" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Invoices")
-                result = data
-            }
-            if (item.title === "Tasks" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Tasks")
-                result = data
-            }
-            if (item.title === "Meetings" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Meetings")
-                result = data
-            }
-            if (item.title === "Calls" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Calls")
-                result = data
-            }
-            if (item.title === "Emails" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Emails")
-                result = data
-            }
-            if (item.title === "Email Template" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Email Template")
-                result = data
-            }
-
-            if (item.view === true) {
-                if (!result.find((i) => i.name === item.title)) {
-                    const ExistingModel = mongoose.model(item.title);
-                    const allData = await ExistingModel.find({ deleted: false });
-                    const colorIndex = result.length % colors.length;
-                    const color = colors[colorIndex];
-
-                    const newObj = {
-                        name: item.title,
-                        length: allData.length,
-                        color: color
-                    };
-
-                    result.push(newObj);
-                }
-
-            }
-        }
-    } else if (userDetails?.role === "superAdmin") {
-        for (const item of fields) {
-            if (!result.find((i) => i.name === item.moduleName)) {
-                const ExistingModel = mongoose.model(item.moduleName);
-                const allData = await ExistingModel.find({ deleted: false });
-                const colorIndex = result.length % colors.length;
-                const color = colors[colorIndex];
-
-                const newObj = {
-                    name: item.moduleName,
-                    length: allData.length,
-                    color: color
-                };
-
-                result.push(newObj);
-            }
-        }
-    } else {
-        result = [];
-    }
-
-    let moduleData = await ModuleActiveDeactive?.find({ isActive: true });
-    const activeModules = moduleData?.map(item => item?.moduleName)
-    let activeModulesReport = result?.filter(item => activeModules?.includes(item?.name))
-
-    res.send(activeModulesReport)
-}
+};
 
 const data = async (req, res) => {
     try {

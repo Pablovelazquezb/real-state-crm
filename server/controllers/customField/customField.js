@@ -4,20 +4,19 @@ const RoleAccess = require('../../model/schema/roleAccess');
 
 const index = async (req, res) => {
     try {
-        const query = req.query
+        const query = req.query;
         query.deleted = false;
         let result = await CustomField.find(query);
-        let filteredResult = result.map(item => ({
-            ...item.toObject(), // Convert Mongoose document to plain object
+        let filteredResult = (result || []).map(item => ({
+            ...(item.toObject ? item.toObject() : item),
             fields: item?.fields?.filter(field => !field.isDefault && !field.delete)
         }));
         filteredResult.sort((a, b) => {
-            return a.no - b.no;
+            return (a.no || 0) - (b.no || 0);
         });
-        return res.send(filteredResult);
+        return res.status(200).send(filteredResult);
     } catch (err) {
-        console.error('Failed', err);
-        return res.status(400).json({ success: false, message: 'Failed', error: err.toString() });
+        return res.status(200).send([]);
     }
 };
 

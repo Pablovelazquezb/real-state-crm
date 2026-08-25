@@ -10,6 +10,7 @@ import {
 import AuthLayout from "./layouts/auth";
 import AdminLayout from "layouts/admin";
 import UserLayout from "layouts/user";
+import ClientPortal from "views/clientPortal";
 import { ChakraProvider } from "@chakra-ui/react";
 import theme from "theme/theme";
 import { ThemeEditorProvider } from "@hypertheme-editor/chakra-ui";
@@ -30,6 +31,11 @@ function App() {
     <>
       <ToastContainer />
       <Routes>
+        {/* Public Client Portal Routes */}
+        <Route path="/portal/*" element={<ClientPortal />} />
+        <Route path="/client/*" element={<ClientPortal />} />
+        <Route path="/catalog/*" element={<ClientPortal />} />
+
         {token && user?.role ? (
           user?.role === "user" ? (
             <Route path="/*" element={<UserLayout />} />

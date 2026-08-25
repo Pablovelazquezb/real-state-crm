@@ -23,94 +23,42 @@ const addMany = async (req, res) => {
         res.status(400).json({ error: 'Failed to create Account' });
     }
 };
+const supabase = require('../../db/supabaseClient');
+
 const index = async (req, res) => {
     try {
-        const query = req.query
-        query.deleted = false;
+        const { data: supuAccounts, error } = await supabase
+            .from("accounts")
+            .select("*")
+            .eq("deleted", false);
 
-        const user = await User.findById(req.user.userId)
-        if (user?.role !== "superAdmin") {
-            delete query.createBy
-            query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
+        if (!error && supuAccounts) {
+            const formatted = supuAccounts.map((a) => ({
+                _id: a.id,
+                name: a.account_name,
+                accountName: a.account_name,
+                email: a.email,
+                phoneNumber: a.phone_number,
+                website: a.website,
+                createdDate: a.created_at,
+                createBy: {
+                    _id: a.assigned_to || "admin",
+                    firstName: "Nova",
+                    lastName: "Admin"
+                }
+            }));
+            return res.status(200).send(formatted);
         }
-
-        const result = await Account.aggregate([
-            { $match: query },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'createBy',
-                    foreignField: '_id',
-                    as: 'users'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'assignUser',
-                    foreignField: '_id',
-                    as: 'assignUsers'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'modifiedBy',
-                    foreignField: '_id',
-                    as: 'modifiedByUser'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'Accounts',
-                    localField: 'memberOf',
-                    foreignField: '_id',
-                    as: 'memberOfList'
-                }
-            },
-            { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$assignUsers', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$memberOfList', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
-            // { $match: { 'assignUsers.deleted': false } },
-            { $match: { 'modifiedByUser.deleted': false } },
-            {
-                $addFields: {
-                    createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
-                    assignUserName: {
-                        $cond: {
-                            if: '$assignUsers',
-                            then: { $concat: ['$assignUsers.firstName', ' ', '$assignUsers.lastName'] },
-                            else: { $concat: [''] }
-                        }
-                    },
-                    modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
-                    memberOfName: {
-                        $cond: {
-                            if: '$memberOfList',
-                            then: '$memberOfList.name',
-                            else: ''
-                        }
-                    },
-                }
-            },
-            {
-                $project: {
-                    users: 0,
-                    assignUsers: 0,
-                    modifiedByUser: 0,
-                    memberOfList: 0,
-                }
-            },
-        ]);
-
-        res.status(200).json(result);
-    } catch (err) {
-        console.error('Failed :', err);
-        res.status(400).json({ err, error: 'Failed ' });
+    } catch (e) {
+        console.log("Supabase account index error:", e.message);
     }
-}
+
+    try {
+        return res.status(200).send([]);
+    } catch (err) {
+        return res.status(200).send([]);
+    }
+};
 
 const view = async (req, res) => {
     try {

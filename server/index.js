@@ -16,7 +16,10 @@ const app = express();
 // Middleware
 app.use(bodyParser.json());
 // Set up CORS  
-app.use(cors())
+app.use(cors({
+    origin: '*',
+    exposedHeaders: ['Authorization']
+}));
 //API Routes
 app.use('/api', route);
 

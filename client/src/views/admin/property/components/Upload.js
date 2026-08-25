@@ -64,7 +64,7 @@ export default function Upload(props) {
             mx="auto"
             textAlign="start"
           >
-            Accepted File Types (Images files - 15MB max) only 10 files
+            Accepted File Types (Images files - 15MB max) up to 99 files
           </Text>
         </Flex>
       </GridItem>

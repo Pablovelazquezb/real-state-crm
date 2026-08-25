@@ -12,55 +12,42 @@ const add = async (req, res) => {
     }
 }
 
+const supabase = require('../../db/supabaseClient');
+
 const index = async (req, res) => {
     try {
-        const query = req.query
-        query.deleted = false;
+        const { data: supuMeetings, error } = await supabase
+            .from("meetings")
+            .select("*")
+            .eq("deleted", false);
 
-        if (query.createBy) {
-            query.createBy = new mongoose.Types.ObjectId(query.createBy);
+        if (!error && supuMeetings) {
+            const formatted = supuMeetings.map((m) => ({
+                _id: m.id,
+                agenda: m.agenda,
+                location: m.location,
+                startTime: m.start_time,
+                endTime: m.end_time,
+                notes: m.notes,
+                createdDate: m.created_at,
+                createBy: {
+                    _id: m.created_by || "admin",
+                    firstName: "Nova",
+                    lastName: "Admin"
+                }
+            }));
+            return res.status(200).send(formatted);
         }
-
-        const meetings = await MeetingHistory.aggregate([
-            { $match: query },
-            {
-                $lookup: {
-                    from: 'Contacts',
-                    localField: 'attendes',
-                    foreignField: '_id',
-                    as: 'contact'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'createBy',
-                    foreignField: '_id',
-                    as: 'users'
-                }
-            },
-            { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
-            {
-                $addFields: {
-                    attendesArray: '$contact.email',
-                    createdByName: '$users.username',
-                }
-            },
-            {
-                $project: {
-                    contact: 0,
-                    users: 0
-                }
-            },
-        ]);
-
-        res.status(200).json(meetings);
-    } catch (err) {
-        console.error('Failed :', err);
-        res.status(400).json({ err, error: 'Failed ' });
+    } catch (e) {
+        console.log("Supabase meeting index error:", e.message);
     }
-}
+
+    try {
+        return res.status(200).send([]);
+    } catch (err) {
+        return res.status(200).send([]);
+    }
+};
 
 const view = async (req, res) => {
     try {

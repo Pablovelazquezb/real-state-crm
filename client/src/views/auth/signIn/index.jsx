@@ -257,10 +257,22 @@ function SignIn() {
                 w="100%"
                 h="50"
                 type="submit"
-                mb="24px"
+                mb="16px"
                 disabled={isLoding ? true : false}
               >
                 {isLoding ? <Spinner /> : "Sign In"}
+              </Button>
+              <Button
+                fontSize="sm"
+                variant="outline"
+                colorScheme="brand"
+                fontWeight="600"
+                w="100%"
+                h="50"
+                borderRadius="xl"
+                onClick={() => navigate("/portal")}
+              >
+                🏡 ¿Eres cliente? Explora nuestro Catálogo →
               </Button>
             </FormControl>
           </form>

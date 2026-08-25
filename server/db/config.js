@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+mongoose.set('bufferCommands', false);
 const User = require('../model/schema/user');
 const bcrypt = require('bcrypt');
 const { initializeLeadSchema } = require("../model/schema/lead");
@@ -43,71 +44,89 @@ const initializedSchemas = async () => {
 
 }
 
+const supabase = require('./supabaseClient');
+
 const connectDB = async (DATABASE_URL, DATABASE) => {
     try {
-        const DB_OPTIONS = {
-            dbName: DATABASE
+        console.log("Connecting to Supabase Database...");
+        
+        // Check Supabase connection
+        const { data: users, error } = await supabase.from('users').select('*').limit(1);
+        if (error && error.code === 'PGRST205') {
+            console.log("Supabase connected successfully! (Tables ready to be created via SQL schema).");
+        } else if (error) {
+            console.log("Supabase notice:", error.message);
+        } else {
+            console.log("Supabase Database Connected Successfully.");
         }
 
-        mongoose.set("strictQuery", false);
-        await mongoose.connect(DATABASE_URL, DB_OPTIONS);
+        // Seed Default SuperAdmin in Supabase
+        const { data: existingAdmin, error: adminErr } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', 'admin@gmail.com');
 
-        // const collectionsToDelete = ['abc', 'Report and analytics', 'test', 'krushil', 'bca', 'xyz', 'lkjhg', 'testssssss', 'tel', 'levajav', 'tellevajav', 'Contact'];
-        // const db = mongoose.connection.db;
-        // console.log(db)
-        // for (const collectionName of collectionsToDelete) {
-        //     await db.collection(collectionName).drop();
-        //     console.log(`Collection ${collectionName} deleted successfully.`);
-        // }
+        if (!adminErr && existingAdmin && existingAdmin.length === 0) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            const { error: createErr } = await supabase.from('users').insert([
+                {
+                    username: 'admin@gmail.com',
+                    password: hashedPassword,
+                    first_name: 'Nova',
+                    last_name: 'Admin',
+                    phone_number: '7874263694',
+                    role: 'superAdmin'
+                }
+            ]);
 
-        await initializedSchemas();
-
-        /* this was temporary  */
-        const mockRes = {
-            status: (code) => {
-                return {
-                    json: (data) => { }
-                };
-            },
-            json: (data) => { }
-        };
-
-        // Create default modules
-        await createNewModule({ body: { moduleName: 'Leads', fields: leadFields, headings: [], isDefault: true } }, mockRes);
-        await createNewModule({ body: { moduleName: 'Contacts', fields: contactFields, headings: [], isDefault: true } }, mockRes);
-        await createNewModule({ body: { moduleName: 'Properties', fields: propertiesFields, headings: [], isDefault: true } }, mockRes);
-
-        // Create default role
-        // await createNewRole({ body: defaultRole }, mockRes);
-
-        /*  */
-        await initializedSchemas();
-
-        let adminExisting = await User.find({ role: 'superAdmin' });
-        if (adminExisting.length <= 0) {
-            const phoneNumber = 7874263694
-            const firstName = 'Prolink'
-            const lastName = 'Infotech'
-            const username = 'admin@gmail.com'
-            const password = 'admin123'
-            // Hash the password
-            const hashedPassword = await bcrypt.hash(password, 10);
-            // Create a new user
-            const user = new User({ _id: new mongoose.Types.ObjectId('64d33173fd7ff3fa0924a109'), username, password: hashedPassword, firstName, lastName, phoneNumber, role: 'superAdmin' });
-            // Save the user to the database
-            await user.save();
-            console.log("Admin created successfully..");
-        } else if (adminExisting[0].deleted === true) {
-            await User.findByIdAndUpdate(adminExisting[0]._id, { deleted: false });
-            console.log("Admin Update successfully..");
-        } else if (adminExisting[0].username !== "admin@gmail.com") {
-            await User.findByIdAndUpdate(adminExisting[0]._id, { username: 'admin@gmail.com' });
-            console.log("Admin Update successfully..");
+            if (createErr) {
+                console.log("Supabase Admin creation info:", createErr.message);
+            } else {
+                console.log("Default SuperAdmin ('admin@gmail.com') created in Supabase!");
+            }
+        } else if (existingAdmin && existingAdmin.length > 0) {
+            console.log("SuperAdmin 'admin@gmail.com' ready in Supabase.");
         }
 
-        console.log("Database Connected Successfully..");
+        // Try Mongoose connection if MongoDB URL provided (graceful attempt)
+        try {
+            const mongoose = require('mongoose');
+            if (DATABASE_URL) {
+                mongoose.set("strictQuery", false);
+                await mongoose.connect(DATABASE_URL, { dbName: DATABASE });
+                console.log("MongoDB Mongoose layer initialized.");
+
+                // Seed default CustomFields if missing
+                const CustomField = require('../model/schema/customField.js');
+                const modulesToSeed = [
+                    { moduleName: 'Properties', fields: propertiesFields, no: 1 },
+                    { moduleName: 'Contacts', fields: contactFields, no: 2 },
+                    { moduleName: 'Leads', fields: leadFields, no: 3 }
+                ];
+
+                for (const m of modulesToSeed) {
+                    const existing = await CustomField.findOne({ moduleName: m.moduleName });
+                    if (!existing) {
+                        await CustomField.create({
+                            moduleName: m.moduleName,
+                            fields: m.fields,
+                            headings: [],
+                            no: m.no,
+                            createdDate: new Date(),
+                            deleted: false
+                        });
+                        console.log(`Default CustomField module '${m.moduleName}' seeded.`);
+                    }
+                }
+                await initializedSchemas();
+            }
+        } catch (mErr) {
+            console.log("Mongoose secondary layer skipped/info:", mErr.message);
+        }
+
     } catch (err) {
-        console.log("Database Not connected", err.message);
+        console.log("Database connection error:", err.message);
     }
 }
-module.exports = connectDB
+
+module.exports = connectDB;

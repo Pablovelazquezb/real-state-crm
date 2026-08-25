@@ -5,21 +5,52 @@ const Task = require("../../model/schema/task");
 const MeetingHistory = require("../../model/schema/meeting");
 const DocumentSchema = require("../../model/schema/document");
 
+const supabase = require("../../db/supabaseClient");
+
 const index = async (req, res) => {
-  const query = req.query;
-  query.deleted = false;
+  try {
+    const { data: supuLeads, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("deleted", false);
 
-  // let result = await Lead.find(query)
+    if (!error && supuLeads) {
+      const formatted = supuLeads.map((l) => ({
+        _id: l.id,
+        leadName: l.lead_name,
+        leadEmail: l.lead_email,
+        leadPhoneNumber: l.lead_phone_number,
+        leadAddress: l.lead_address,
+        leadStatus: l.lead_status,
+        leadSource: l.lead_source,
+        createdDate: l.created_at,
+        createBy: {
+          _id: l.lead_owner || "admin",
+          firstName: "Nova",
+          lastName: "Admin"
+        }
+      }));
+      return res.status(200).send(formatted);
+    }
+  } catch (e) {
+    console.log("Supabase lead query error:", e.message);
+  }
 
-  let allData = await Lead.find(query)
-    .populate({
-      path: "createBy",
-      match: { deleted: false }, // Populate only if createBy.deleted is false
-    })
-    .exec();
+  try {
+    const query = req.query;
+    query.deleted = false;
+    let allData = await Lead.find(query)
+      .populate({
+        path: "createBy",
+        match: { deleted: false },
+      })
+      .exec();
 
-  const result = allData.filter((item) => item.createBy !== null);
-  res.send(result);
+    const result = (allData || []).filter((item) => item.createBy !== null);
+    return res.send(result);
+  } catch (mErr) {
+    return res.send([]);
+  }
 };
 
 const addMany = async (req, res) => {

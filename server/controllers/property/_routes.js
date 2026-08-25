@@ -4,7 +4,8 @@ const auth = require("../../middelwares/auth");
 
 const router = express.Router();
 
-router.get("/", auth, property.index);
+router.get("/", property.index);
+router.get("/public", property.index);
 router.post("/add", auth, property.add);
 router.post("/add-units/:id", auth, property.addUnits);
 router.put("/edit-unit/:id", auth, property.editUnit);
@@ -21,7 +22,7 @@ router.post(
   property.genrateOfferLetter
 );
 
-router.get("/view/:id", auth, property.view);
+router.get("/view/:id", property.view);
 router.put("/edit/:id", auth, property.edit);
 router.delete("/delete/:id", auth, property.deleteData);
 router.post("/deleteMany", auth, property.deleteMany);
@@ -32,22 +33,22 @@ router.post(
 );
 router.post(
   "/add-property-photos/:id",
-  property.upload.array("property", 10),
+  property.upload.array("property", 99),
   property.propertyPhoto
 );
 router.post(
   "/add-virtual-tours-or-videos/:id",
-  property.virtualTours.array("property", 10),
+  property.virtualTours.array("property", 99),
   property.VirtualToursorVideos
 );
 router.post(
   "/add-floor-plans/:id",
-  property.FloorPlansStorage.array("property", 10),
+  property.FloorPlansStorage.array("property", 99),
   property.FloorPlans
 );
 router.post(
   "/add-property-documents/:id",
-  property.PropertyDocumentsStorage.array("property", 10),
+  property.PropertyDocumentsStorage.array("property", 99),
   property.PropertyDocuments
 );
 

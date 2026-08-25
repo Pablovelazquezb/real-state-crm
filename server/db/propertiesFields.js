@@ -1,208 +1,205 @@
 const propertiesFields = [
     {
-      "name": "name",
-      "label": "Name",
-      "type": "text",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "String",
-      "isTableField": true,
-      "isView": false,
-      "options": [],
-      "validation": [
-        {
-          "require": true,
-          "message": ""
-        }
-      ]
-    },
-    {
-      name: "lrNo",
-      label: "L.R. NO. ",
+      name: "name",
+      label: "Property Name",
       type: "text",
       fixed: true,
+      isDefault: false,
+      editable: true,
       delete: false,
       belongsTo: null,
       backendType: "String",
-      editable: false,
       isTableField: true,
+      isView: true,
       options: [],
       validation: [
         {
           require: true,
-          message: "",
-        },
+          message: "Property Name is required"
+        }
+      ]
+    },
+    {
+      name: "propertyType",
+      label: "Property Type",
+      type: "select",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Mixed",
+      isTableField: true,
+      isView: true,
+      options: [
+        { name: "Residential", value: "Residential" },
+        { name: "Commercial", value: "Commercial" },
+        { name: "Apartment", value: "Apartment" },
+        { name: "House", value: "House" },
+        { name: "Land", value: "Land" },
+        { name: "Industrial", value: "Industrial" }
       ],
+      validation: [
+        {
+          require: true,
+          message: "Property Type is required"
+        }
+      ]
     },
     {
-      "name": "status",
-      "label": "Status",
-      "type": "select",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": true,
-      "isView": false,
-      "options": [
+      name: "price",
+      label: "Price ($)",
+      type: "number",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Number",
+      isTableField: true,
+      isView: true,
+      options: [],
+      validation: [
         {
-          "name": "Available",
-          "value": "Available"
-        },
-        {
-          "name": "Booked",
-          "value": "Booked"
-        },
-        {
-          "name": "Sold",
-          "value": "Sold"
-        },
-        {
-          "name": "Blocked",
-          "value": "Blocked"
+          require: true,
+          message: "Price is required"
         }
+      ]
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Mixed",
+      isTableField: true,
+      isView: true,
+      options: [
+        { name: "Available", value: "Available" },
+        { name: "Booked", value: "Booked" },
+        { name: "Sold", value: "Sold" },
+        { name: "Blocked", value: "Blocked" },
+        { name: "Pending", value: "Pending" }
       ],
-      "validation": [
+      validation: [
         {
-          "message": "Invalid type value for Lead Status",
-          "formikType": "String"
-        },
-        {
-          "require": true,
-          "message": ""
-        }
-      ]
-    },
-    // {
-    //   "name": "Unit",
-    //   "label": "Unit ",
-    //   "type": "text",
-    //   "fixed": true,
-    //   "isDefault": false,
-    //   "editable": false,
-    //   "delete": false,
-    //   "belongsTo": null,
-    //   "backendType": "Mixed",
-    //   "isTableField": false,
-    //   "isView": false,
-    //   "validation": [
-    //     {
-    //       "require": true,
-    //       "message": ""
-    //     }
-    //   ]
-    // },
-    {
-      "name": "Floor",
-      "label": "Floor",
-      "type": "number",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false,
-      "validation": [
-        {
-          "require": true,
-          "message": ""
+          require: true,
+          message: "Status is required"
         }
       ]
     },
     {
-      "name": "yearBuilt",
-      "label": "Year Built",
-      "type": "number",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false
+      name: "location",
+      label: "Location / Address",
+      type: "text",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "String",
+      isTableField: true,
+      isView: true,
+      options: [],
+      validation: []
     },
     {
-      "name": "propertyDescription",
-      "label": "Property Description",
-      "type": "text",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false
+      name: "bedrooms",
+      label: "Bedrooms",
+      type: "number",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Number",
+      isTableField: true,
+      isView: true,
+      options: [],
+      validation: []
     },
     {
-      "name": "parking",
-      "label": "Parking",
-      "type": "radio",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false,
-      "options": [
-        {
-          "name": "Yes",
-          "value": "Yes"
-        },
-        {
-          "name": "No",
-          "value": "No"
-        }
-      ]
+      name: "bathrooms",
+      label: "Bathrooms",
+      type: "number",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Number",
+      isTableField: true,
+      isView: true,
+      options: [],
+      validation: []
     },
     {
-      "name": "flooringType",
-      "label": "Flooring Type",
-      "type": "text",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false
+      name: "squareFeet",
+      label: "Superficie / Área (m²)",
+      type: "number",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Number",
+      isTableField: true,
+      isView: true,
+      options: [],
+      validation: []
     },
     {
-      "name": "location",
-      "label": "Location",
-      "type": "text",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false
+      name: "yearBuilt",
+      label: "Year Built",
+      type: "number",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Number",
+      isTableField: false,
+      isView: true,
+      options: [],
+      validation: []
     },
     {
-      "name": "Facility",
-      "label": "Facility",
-      "type": "text",
-      "fixed": true,
-      "isDefault": false,
-      "editable": false,
-      "delete": false,
-      "belongsTo": null,
-      "backendType": "Mixed",
-      "isTableField": false,
-      "isView": false
+      name: "parking",
+      label: "Parking Available",
+      type: "radio",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "Mixed",
+      isTableField: false,
+      isView: true,
+      options: [
+        { name: "Yes", value: "Yes" },
+        { name: "No", value: "No" }
+      ],
+      validation: []
+    },
+    {
+      name: "propertyDescription",
+      label: "Property Description",
+      type: "text",
+      fixed: true,
+      isDefault: false,
+      editable: true,
+      delete: false,
+      belongsTo: null,
+      backendType: "String",
+      isTableField: false,
+      isView: true,
+      options: [],
+      validation: []
     }
   ];
+
 exports.propertiesFields = propertiesFields;

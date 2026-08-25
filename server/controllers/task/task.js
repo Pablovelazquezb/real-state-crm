@@ -1,63 +1,44 @@
 const Task = require('../../model/schema/task')
 const mongoose = require('mongoose');
 
+const supabase = require('../../db/supabaseClient');
+
 const index = async (req, res) => {
-    query = req.query;
-    query.deleted = false;
-    if (query.createBy) {
-        query.createBy = new mongoose.Types.ObjectId(query.createBy);
+    try {
+        const { data: supuTasks, error } = await supabase
+            .from("tasks")
+            .select("*")
+            .eq("deleted", false);
+
+        if (!error && supuTasks) {
+            const formatted = supuTasks.map((t) => ({
+                _id: t.id,
+                title: t.title,
+                category: t.category,
+                description: t.description,
+                status: t.status,
+                priority: t.priority,
+                startDate: t.start_date,
+                endDate: t.end_date,
+                createdDate: t.created_at,
+                createBy: {
+                    _id: t.assigned_to || "admin",
+                    firstName: "Nova",
+                    lastName: "Admin"
+                }
+            }));
+            return res.status(200).send(formatted);
+        }
+    } catch (e) {
+        console.log("Supabase task index error:", e.message);
     }
 
     try {
-        let result = await Task.aggregate([
-            { $match: query },
-            {
-                $lookup: {
-                    from: 'Contacts',
-                    localField: 'assignTo',
-                    foreignField: '_id',
-                    as: 'contact'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'Leads', // Assuming this is the collection name for 'leads'
-                    localField: 'assignToLead',
-                    foreignField: '_id',
-                    as: 'Lead'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'createBy',
-                    foreignField: '_id',
-                    as: 'users'
-                }
-            },
-            { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$contact', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$Lead', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
-            {
-                $addFields: {
-                    assignToName: {
-                        $cond: {
-                            if: '$contact',
-                            then: { $concat: ['$contact.title', ' ', '$contact.firstName', ' ', '$contact.lastName'] },
-                            else: { $concat: ['$Lead.leadName'] }
-                        }
-                    },
-                }
-            },
-            { $project: { users: 0, contact: 0, Lead: 0 } },
-        ]);
-        res.send(result);
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).send("Internal Server Error");
+        return res.status(200).send([]);
+    } catch (err) {
+        return res.status(200).send([]);
     }
-}
+};
 
 const add = async (req, res) => {
     try {

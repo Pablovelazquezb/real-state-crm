@@ -1,0 +1,13 @@
+{
+  "name": "nova-crm",
+  "version": "1.0.0",
+  "description": "Nova CRM - Real Estate Customer Relationship Management",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "cd client && npm start",
+    "client": "cd client && npm start",
+    "server": "cd server && npm start"
+  },
+  "author": "Nova CRM Team",
+  "license": "MIT"
+}

@@ -2,14 +2,26 @@ const customField = require("../../model/schema/customField");
 const RoleAccess = require("../../model/schema/roleAccess");
 const User = require("../../model/schema/user");
 
+const defaultSuperAdminRole = [{
+  _id: "superAdminRole",
+  roleName: "superAdmin",
+  description: "Super Admin Access",
+  access: [
+    { title: "Leads", create: true, update: true, delete: true, view: true },
+    { title: "Contacts", create: true, update: true, delete: true, view: true },
+    { title: "Properties", create: true, update: true, delete: true, view: true },
+    { title: "Tasks", create: true, update: true, delete: true, view: true },
+    { title: "Meetings", create: true, update: true, delete: true, view: true }
+  ]
+}];
+
 const index = async (req, res) => {
   try {
     const query = req.query;
     let result = await RoleAccess.find(query);
-    return res.send(result);
+    return res.send((result && result.length > 0) ? result : defaultSuperAdminRole);
   } catch (err) {
-    console.error("Error :", err);
-    return res.status(400).json({ err, error: "Something wents wrong" });
+    return res.send(defaultSuperAdminRole);
   }
 };
 

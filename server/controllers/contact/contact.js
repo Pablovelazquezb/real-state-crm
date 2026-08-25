@@ -8,23 +8,50 @@ const DocumentSchema = require('../../model/schema/document')
 const Quotes = require("../../model/schema/quotes.js");
 const Invoices = require("../../model/schema/invoices.js");
 
+const supabase = require("../../db/supabaseClient");
+
 const index = async (req, res) => {
-    const query = req.query
-    query.deleted = false;
+  try {
+    const { data: supuContacts, error } = await supabase
+      .from("contacts")
+      .select("*")
+      .eq("deleted", false);
 
-    let allData = await Contact.find(query).populate({
-        path: 'createBy',
-        match: { deleted: false } // Populate only if createBy.deleted is false
-    }).exec()
-
-    const result = allData.filter(item => item.createBy !== null);
-
-    try {
-        res.send(result)
-    } catch (error) {
-        res.send(error)
+    if (!error && supuContacts) {
+      const formatted = supuContacts.map((c) => ({
+        _id: c.id,
+        firstName: c.first_name,
+        lastName: c.last_name,
+        email: c.email,
+        phoneNumber: c.phone_number,
+        address: c.address,
+        createdDate: c.created_at,
+        createBy: {
+          _id: c.assigned_to || "admin",
+          firstName: "Nova",
+          lastName: "Admin"
+        }
+      }));
+      return res.status(200).send(formatted);
     }
-}
+  } catch (e) {
+    console.log("Supabase contact query error:", e.message);
+  }
+
+  try {
+    const query = req.query;
+    query.deleted = false;
+    let allData = await Contact.find(query).populate({
+      path: 'createBy',
+      match: { deleted: false }
+    }).exec();
+
+    const result = (allData || []).filter(item => item.createBy !== null);
+    return res.send(result);
+  } catch (mErr) {
+    return res.send([]);
+  }
+};
 
 const add = async (req, res) => {
     try {

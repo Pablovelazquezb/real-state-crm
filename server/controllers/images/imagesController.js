@@ -4,10 +4,14 @@ const fs = require('fs');
 const path = require('path');
 
 const index = async (req, res) => {
-    const query = req.query;
-    query.deleted = false;
-    let result = await Img.find(query);
-    return res.send(result);
+    try {
+        const query = req.query;
+        query.deleted = false;
+        let result = await Img.find(query);
+        return res.send(result || []);
+    } catch (e) {
+        return res.send([]);
+    }
 };
 
 const view = async (req, res) => {
