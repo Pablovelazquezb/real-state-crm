@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 const User = require("../../model/schema/user");
 const BankDetails = require("../../model/schema/bankDetails");
+const getMongoUser = require("../../middelwares/mongoUser");
 
 const index = async (req, res) => {
     try {
         query = req.query;
         query.deleted = false;
 
-        const user = await User.findById(req.user.userId);
-        if (user?.role !== "superAdmin") {
+        const currentUser = await getMongoUser(req);
+        if (currentUser && currentUser.role !== "superAdmin") {
             query.createBy = new mongoose.Types.ObjectId(req.user.userId)
         }
 

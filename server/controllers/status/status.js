@@ -3,18 +3,33 @@ const Task = require('../../model/schema/task')
 const { Lead } = require('../../model/schema/lead');
 const user = require('../../model/schema/user');
 
+const isObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || ''));
+
 const index = async (req, res) => {
     try {
         const { query } = req;
         query.deleted = false;
 
+        // Los usuarios del CRM viven en Supabase (UUID): no se consultan en Mongo.
+        if (query.createBy && !isObjectId(query.createBy)) {
+            delete query.createBy;
+        }
+
         const [taskData, leadData] = await Promise.all([
             Task.find(query),
             Lead.find(query)
         ]);
-        const userDetails = await user.findOne({ _id: req.user.userId }).populate({
-            path: 'roles'
-        })
+
+        let userDetails = null;
+        if (isObjectId(req.user?.userId)) {
+            try {
+                userDetails = await user.findOne({ _id: req.user.userId }).populate({
+                    path: 'roles'
+                });
+            } catch (error) {
+                userDetails = null;
+            }
+        }
         const mergedRoles = userDetails?.roles?.reduce((acc, current) => {
             current?.access?.forEach(permission => {
                 const existingPermissionIndex = acc.findIndex(item => item.title === permission.title);

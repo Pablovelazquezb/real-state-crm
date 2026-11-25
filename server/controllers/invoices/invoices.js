@@ -2,6 +2,7 @@ const Invoices = require("../../model/schema/invoices.js");
 const mongoose = require("mongoose");
 const User = require('../../model/schema/user')
 const Quotes = require("../../model/schema/quotes.js");
+const getMongoUser = require("../../middelwares/mongoUser");
 
 
 
@@ -13,8 +14,8 @@ async function getNextAutoIncrementValue() {
 const index = async (req, res) => {
     query = req.query;
     query.deleted = false;
-    const user = await User.findById(req.user.userId)
-    if (user?.role !== "superAdmin") {
+    const currentUser = await getMongoUser(req);
+    if (currentUser && currentUser.role !== "superAdmin") {
         delete query.createBy
         query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
     }

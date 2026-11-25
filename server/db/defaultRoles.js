@@ -30,6 +30,13 @@ const defaultRole = {
             "update": false,
             "delete": false,
             "view": true
+        },
+        {
+            "title": "Prospector FB",
+            "create": true,
+            "update": true,
+            "delete": false,
+            "view": true
         }
     ]
 };

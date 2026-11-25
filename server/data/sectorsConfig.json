@@ -1,0 +1,50 @@
+{
+  "sectors": [
+    {
+      "id": "tec",
+      "name": "Zona Tec",
+      "description": "Propiedades, departamentos y roomies en la Zona Tec de Monterrey",
+      "urls": [
+        "https://www.facebook.com/groups/4997307006973319/"
+      ]
+    },
+    {
+      "id": "san_pedro",
+      "name": "San Pedro y Valle",
+      "description": "Grupos de propiedades y roomies en San Pedro Garza García y Valle Poniente",
+      "urls": [
+        "https://www.facebook.com/groups/RentaDepartamentosSanPedro/",
+        "https://www.facebook.com/groups/RentasSanPedroVMHM/",
+        "https://www.facebook.com/groups/RentasRoomiesSanPedro/",
+        "https://www.facebook.com/groups/MercadoDepasSanPedro/"
+      ]
+    },
+    {
+      "id": "zona_udem",
+      "name": "Zona UDEM",
+      "description": "Grupos de renta y roomies para estudiantes y residentes cerca de UDEM",
+      "urls": [
+        "https://www.facebook.com/groups/BuscoDepaUDEM/",
+        "https://www.facebook.com/groups/RoomiesUDEM/",
+        "https://www.facebook.com/groups/DepasUDEMSanPedroVallePoniente/"
+      ]
+    },
+    {
+      "id": "monterrey_general",
+      "name": "Monterrey y Área Metropolitana",
+      "description": "Grupos principales de renta y venta de casas/depas en Mty, Sur, Contry, etc.",
+      "urls": [
+        "https://www.facebook.com/groups/1070258169651586/",
+        "https://www.facebook.com/groups/CasasTerrenosRentaVentaMonterrey/",
+        "https://www.facebook.com/groups/CasasEnRemateNuevoLeon/",
+        "https://www.facebook.com/groups/QuintasEnTodoNuevoLeon/",
+        "https://www.facebook.com/groups/RoomiesEnMonterreyNL/",
+        "https://www.facebook.com/groups/RentasZonaSurContryPrimavera/",
+        "https://www.facebook.com/groups/LordMultitaskMonterreyMarketplace/",
+        "https://www.facebook.com/groups/RentasMonterrey/",
+        "https://www.facebook.com/groups/RoomiesMonterrey/",
+        "https://www.facebook.com/groups/DepartamentosVentaRentaMonterrey/"
+      ]
+    }
+  ]
+}

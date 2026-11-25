@@ -1,6 +1,7 @@
 const PhoneCall = require("../../model/schema/phoneCall");
 const User = require("../../model/schema/user");
 const mongoose = require("mongoose");
+const getMongoUser = require("../../middelwares/mongoUser");
 
 const add = async (req, res) => {
     try {
@@ -65,9 +66,9 @@ const index = async (req, res) => {
             query.sender = new mongoose.Types.ObjectId(query.sender);
         }
 
-        const user = await User.findById(req.user.userId);
+        const currentUser = await getMongoUser(req);
 
-        if (user?.role !== "superAdmin") {
+        if (currentUser && currentUser.role !== "superAdmin") {
             delete query.sender;
             query.deleted = false;
             query.$or = [

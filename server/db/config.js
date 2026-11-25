@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 mongoose.set('bufferCommands', false);
+// Con bufferCommands=false, la creación automática de colecciones/índices puede
+// lanzar si un modelo se compila antes de que la conexión esté lista (crash loop
+// al reiniciar). Se desactiva y los índices se sincronizan tras conectar.
+mongoose.set('autoCreate', false);
+mongoose.set('autoIndex', false);
 const User = require('../model/schema/user');
 const bcrypt = require('bcrypt');
 const { initializeLeadSchema } = require("../model/schema/lead");
@@ -12,6 +17,7 @@ const { contactFields } = require('./contactFields.js');
 const { leadFields } = require('./leadFields.js');
 const { propertiesFields } = require('./propertiesFields.js');
 const { defaultRole } = require("./defaultRoles.js");
+const { initFacebookScraperModule } = require("../controllers/facebookScraper/bootstrap.js");
 
 const initializedSchemas = async () => {
     await initializeLeadSchema();
@@ -96,6 +102,17 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
                 await mongoose.connect(DATABASE_URL, { dbName: DATABASE });
                 console.log("MongoDB Mongoose layer initialized.");
 
+                // Índices declarados en los esquemas (se crean de forma segura tras conectar)
+                try {
+                    await Promise.all(
+                        Object.values(mongoose.models).map((model) =>
+                            model.createIndexes().catch(() => null)
+                        )
+                    );
+                } catch (indexError) {
+                    console.log("Index sync info:", indexError.message);
+                }
+
                 // Seed default CustomFields if missing
                 const CustomField = require('../model/schema/customField.js');
                 const modulesToSeed = [
@@ -119,6 +136,7 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
                     }
                 }
                 await initializedSchemas();
+                await initFacebookScraperModule();
             }
         } catch (mErr) {
             console.log("Mongoose secondary layer skipped/info:", mErr.message);

@@ -4,10 +4,26 @@ const Task = require('../../model/schema/task');
 const MeetingHistory = require('../../model/schema/meeting');
 const User = require('../../model/schema/user');
 
+const isObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || ''));
+
 const index = async (req, res) => {
     try {
         const query = { ...req.query, deleted: false };
-        const userDetails = await User.findOne({ _id: req.user.userId }).populate({ path: 'roles' });
+
+        // Los usuarios del CRM viven en Supabase (UUID): se ignoran filtros de Mongo
+        // que provocarían un CastError y un 500.
+        if (query.createBy && !isObjectId(query.createBy)) {
+            delete query.createBy;
+        }
+
+        let userDetails = null;
+        if (isObjectId(req.user?.userId)) {
+            try {
+                userDetails = await User.findOne({ _id: req.user.userId }).populate({ path: 'roles' });
+            } catch (error) {
+                userDetails = null;
+            }
+        }
 
         const callData = await PhoneCall.find(query);
         const emailData = await Email.find(query);

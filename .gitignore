@@ -31,3 +31,10 @@ Client/.env
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# caché local de npm usada por scripts/nova.sh
+.npm-cache
+logs/
+
+# Catálogo histórico de prospectos (contiene datos personales)
+server/data/facebookLeadsSeed.json

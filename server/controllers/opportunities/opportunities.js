@@ -1,6 +1,7 @@
 const Opprtunities = require('../../model/schema/opprtunity')
 const User = require('../../model/schema/user')
 const mongoose = require('mongoose');
+const getMongoUser = require("../../middelwares/mongoUser");
 
 const add = async (req, res) => {
     try {
@@ -31,8 +32,10 @@ const index = async (req, res) => {
         const query = req.query
         query.deleted = false;
 
-        const user = await User.findById(req.user.userId)
-        if (user?.role !== "superAdmin") {
+        const currentUser = await getMongoUser(req);
+
+        // Los usuarios de Supabase (UUID) no existen en Mongo: ven todo el módulo.
+        if (currentUser && currentUser.role !== "superAdmin") {
             delete query.createBy
             query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
         }

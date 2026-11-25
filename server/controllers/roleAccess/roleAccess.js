@@ -1,6 +1,10 @@
 const customField = require("../../model/schema/customField");
 const RoleAccess = require("../../model/schema/roleAccess");
 const User = require("../../model/schema/user");
+const supabase = require("../../db/supabaseClient");
+
+const isUuid = (value) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 
 const defaultSuperAdminRole = [{
   _id: "superAdminRole",
@@ -39,21 +43,12 @@ const add = async (req, res) => {
     } else {
       const createdDate = new Date();
 
+      // Solo los módulos que se usan en esta instalación (menú simplificado).
       const titles = [
-        "Emails",
-        "Calls",
-        "Meetings",
-        "Tasks",
         "Properties",
-        "Contacts",
         "Leads",
-        "Documents",
-        "Email Template",
-        "Opportunities",
-        "Opportunity Project",
-        "Account",
-        "Quotes",
-        "Invoices",
+        "Contacts",
+        "Prospector FB",
       ];
 
       const customModules = Array.from(
@@ -83,7 +78,9 @@ const add = async (req, res) => {
                 create: false,
                 update: false,
                 delete: false,
-                view: false,
+                // El Prospector FB se habilita por defecto para que los empleados
+                // lo vean en el menú; el administrador puede quitarlo desde Roles.
+                view: item === "Prospector FB",
               });
             } else {
               const currentRolePermission = access?.find(
@@ -133,7 +130,43 @@ const edit = async (req, res) => {
 
 const roleAssignedUsers = async (req, res) => {
   try {
-    let result = await User.find({
+    const role = await RoleAccess.findById(req.params.id).lean();
+    const roleName = role?.roleName;
+
+    // Usuarios del CRM (Supabase) asignados a este rol
+    if (roleName) {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("deleted", false)
+        .ilike("role", roleName);
+
+      if (!error && data) {
+        const supabaseUsers = data.map((u) => ({
+          _id: u.id,
+          username: u.username,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          phoneNumber: u.phone_number,
+          role: u.role,
+          roles: [],
+        }));
+
+        let mongoUsers = [];
+        try {
+          mongoUsers = await User.find({
+            roles: { $in: [req.params.id] },
+            deleted: false,
+          });
+        } catch (error) {
+          mongoUsers = [];
+        }
+
+        return res.send([...supabaseUsers, ...mongoUsers]);
+      }
+    }
+
+    const result = await User.find({
       roles: { $in: [req.params.id] },
       deleted: false,
     });
@@ -145,32 +178,60 @@ const roleAssignedUsers = async (req, res) => {
 };
 
 const assignRoleToUsers = async (req, res) => {
-  try {
-    // const updatedUsers = await User.updateMany({ _id: { $in: req.body } }, { $addToSet: { roles: req.params.id } });    // add if not already exist
-    // const updatedUsers2 = await User.updateMany({ _id: { $nin: req.body }, roles: req.params.id }, { $pull: { roles: req.params.id } });      // remove
+  const selected = Array.isArray(req.body) ? req.body : [];
+  const supabaseIds = selected.filter(isUuid);
+  const mongoIds = selected.filter((id) => /^[a-f\d]{24}$/i.test(String(id)));
 
-    const bulkOperations = [];
+  let updated = 0;
 
-    bulkOperations.push({
-      updateMany: {
-        filter: { _id: { $in: req.body }, deleted: false },
-        update: { $addToSet: { roles: req.params.id } },
-      },
-    });
+  // 1) Usuarios del CRM (Supabase): la columna `role` toma el nombre del rol.
+  if (supabaseIds.length > 0) {
+    try {
+      const role = await RoleAccess.findById(req.params.id).lean();
 
-    bulkOperations.push({
-      updateMany: {
-        filter: { _id: { $nin: req.body }, deleted: false },
-        update: { $pull: { roles: req.params.id } },
-      },
-    });
+      if (!role?.roleName) {
+        return res.status(404).json({ message: "Rol no encontrado." });
+      }
 
-    const result = await User.bulkWrite(bulkOperations);
-    return res.send({ message: "Role changed successfully", result });
-  } catch (err) {
-    console.error("Error :", err);
-    return res.status(400).json({ err, error: "Something wents wrong" });
+      const { data, error } = await supabase
+        .from("users")
+        .update({ role: role.roleName, updated_at: new Date() })
+        .in("id", supabaseIds)
+        .select("id");
+
+      if (error) {
+        console.error("Supabase role assign error:", error.message);
+        return res.status(400).json({ message: "No se pudo asignar el rol en Supabase." });
+      }
+
+      updated += (data || []).length;
+    } catch (error) {
+      console.error("Supabase role assign error:", error.message);
+      return res.status(400).json({ message: "No se pudo asignar el rol." });
+    }
   }
+
+  // 2) Usuarios históricos de Mongo (compatibilidad)
+  if (mongoIds.length > 0) {
+    try {
+      const bulkOperations = [
+        {
+          updateMany: {
+            filter: { _id: { $in: mongoIds }, deleted: false },
+            update: { $addToSet: { roles: req.params.id } },
+          },
+        },
+      ];
+
+      const result = await User.bulkWrite(bulkOperations);
+      updated += result?.modifiedCount || 0;
+    } catch (err) {
+      console.error("Error :", err);
+      return res.status(400).json({ err, message: "Something wents wrong" });
+    }
+  }
+
+  return res.send({ message: "Role changed successfully", updated });
 };
 
 module.exports = { index, add, edit, roleAssignedUsers, assignRoleToUsers };

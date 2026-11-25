@@ -30,6 +30,8 @@ const accountRoute = require("./account/_routes")
 const invoicesRoute = require("./invoices/_routes")
 const opportunitiesproject = require("./opportunityproject/_router")
 const bankDetailsRoute = require("./bankDetails/_routes")
+const facebookScraperRoute = require("./facebookScraper/_routes")
+const publicRoute = require("./public/_routes")
 
 //Api`s
 router.use('/contact', contactRoute);
@@ -41,6 +43,8 @@ router.use('/reporting', reportingRoute);
 router.use('/user', userRoute);
 router.use('/payment', paymentRoute);
 router.use('/bank-details', bankDetailsRoute);
+router.use('/facebook-scraper', facebookScraperRoute);
+router.use('/public', publicRoute);
 
 router.use('/email', emailRoute);
 router.use('/phoneCall', phoneCallRoute);
