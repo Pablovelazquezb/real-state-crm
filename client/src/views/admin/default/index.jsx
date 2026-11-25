@@ -1,355 +1,465 @@
-// Chakra imports
 import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
   Flex,
-  Heading,
+  HStack,
   Icon,
   IconButton,
   SimpleGrid,
-  useColorModeValue,
-  Grid,
-  GridItem,
-  Progress,
-  Box,
+  Skeleton,
   Text,
+  Tooltip,
+  useColorModeValue,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
-// Assets
-// Custom components
-import { ViewIcon } from "@chakra-ui/icons";
 import Card from "components/card/Card";
-import MiniStatistics from "components/card/MiniStatistics";
-import IconBox from "components/icons/IconBox";
-import { HSeparator } from "components/separator/Separator";
-import { useEffect, useState } from "react";
-import { LuBuilding2 } from "react-icons/lu";
-import { MdAddTask, MdContacts, MdLeaderboard } from "react-icons/md";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FaArrowRight,
+  FaBuilding,
+  FaFire,
+  FaHandshake,
+  FaMapMarkerAlt,
+  FaPlus,
+  FaUserFriends,
+  FaUsers,
+  FaWhatsapp,
+} from "react-icons/fa";
 import { getApi } from "services/api";
-import ReportChart from "../reports/components/reportChart";
-import Chart from "components/charts/LineChart.js";
-import { HasAccess } from "../../../redux/accessUtils";
-import PieChart from "components/charts/PieChart";
-import CountUpComponent from "../../../../src/components/countUpComponent/countUpComponent";
-import Spinner from 'components/spinner/Spinner';
-import { useSelector } from "react-redux";
+import { formatDate, scoreScheme } from "views/admin/facebookProspector/constants";
 
-export default function UserReports() {
-  // Chakra Color Mode
-  const brandColor = useColorModeValue("brand.500", "white");
-  const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
-  const user = JSON.parse(localStorage.getItem("user"));
-  const [isLoding, setIsLoding] = useState(false);
+const toArray = (response) => {
+  if (!response || response.status >= 400) return [];
+  const payload = response.data;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.user)) return payload.user;
+  return [];
+};
 
-  const [allData, setAllData] = useState([]);
-  const [data, setData] = useState([]);
-  const navigate = useNavigate();
-  const modules = useSelector((state) => state?.modules?.data)
-  const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
+const money = (value) => {
+  const number = Number(value);
+  if (!number) return "—";
+  if (number >= 1000000) return `$${(number / 1000000).toFixed(1)}M`;
+  return `$${number.toLocaleString("es-MX")}`;
+};
 
-  const fetchData = async () => {
-    let responseData = await getApi(user?.role === 'superAdmin' ? `api/status/` : `api/status/?createBy=${user?._id}`);
-    setAllData(responseData?.data?.data);
-  };
+const initials = (name) =>
+  String(name || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "N";
 
-
-  const fetchProgressChart = async () => {
-    setIsLoding(true);
-    let result = await getApi(user?.role === 'superAdmin' ? 'api/reporting/line-chart' : `api/reporting/line-chart?createBy=${user?._id}`);
-    if (result && result?.status === 200) {
-      setData(result?.data)
-    }
-    setIsLoding(false);
-  }
-  useEffect(() => {
-    fetchProgressChart()
-  }, [])
-
-
-  const findModuleData = (title) => {
-    const filterData = data?.find(item => item?.name === title)
-    return filterData?.length || 0
-  }
-
-  const findLeadStatus = (title) => {
-    const filterData = allData?.leadData?.filter(item => item?.leadStatus === title)
-    return filterData?.length || 0
-  }
-  const findTaskStatus = (title) => {
-    const filterData = allData?.taskData?.filter(item => item?.status === title)
-    return filterData?.length || 0
-  }
-
-  const leadModule = modules?.find(({ moduleName }) => moduleName === "Leads")
-  const contactModule = modules?.find(({ moduleName }) => moduleName === "Contacts")
-  const propertiesModule = modules?.find(({ moduleName }) => moduleName === "Properties")
-  const tasksModule = modules?.find(({ moduleName }) => moduleName === "Tasks")
-  const reportModule = modules?.find(({ moduleName }) => moduleName === "Reporting and Analytics")
-  const emailModule = modules?.find(({ moduleName }) => moduleName === "Emails")
-  const callModule = modules?.find(({ moduleName }) => moduleName === "Calls")
-
-  const taskStatus = [
-    {
-      name: "Completed",
-      status: 'completed',
-      length: findTaskStatus('completed'),
-      color: "#4d8f3a"
-    },
-    {
-      name: "Pending",
-      status: 'pending',
-      length: findTaskStatus('pending'),
-      color: "#a37f08"
-    },
-    {
-      name: "In Progress",
-      status: 'inProgress',
-      length: findTaskStatus('inProgress'),
-      color: "#7038db"
-    },
-    {
-      name: "Todo",
-      status: 'todo',
-      length: findTaskStatus('todo'),
-      color: "#1f7eeb"
-    },
-    {
-      name: "On Hold",
-      status: 'onHold',
-      length: findTaskStatus('onHold'),
-      color: "#DB5436"
-    },
-  ]
-  const navigateTo = {
-    Lead: '/lead',
-    Contact: '/contacts',
-    Meeting: '/metting',
-    Call: '/phone-call',
-    Task: '/task',
-    Email: '/email',
-    Property: '/properties',
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [user?._id]);
+const KpiCard = ({ label, value, hint, icon, tint, onClick, loading }) => {
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const muted = useColorModeValue("secondaryGray.500", "secondaryGray.400");
+  const borderColor = useColorModeValue("secondaryGray.400", "whiteAlpha.100");
 
   return (
-    <>
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap="20px" mb="20px">
-        {(taskView?.create || taskView?.update || taskView?.delete || taskView?.view) && (tasksModule?.isActive) &&
-          <MiniStatistics
-            onClick={() => navigate("/task")}
-            startContent={
-              <IconBox
-                w="56px"
-                h="56px"
-                bg="linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)"
-                icon={<Icon w="28px" h="28px" as={MdAddTask} color="white" />}
-              />
-            }
-            name="Tasks"
-            value={findModuleData("Tasks")}
-          />}
-        {(contactsView?.create || contactsView?.update || contactsView?.delete || contactsView?.view) && (contactModule?.isActive) &&
-          < MiniStatistics
-            onClick={() => navigate("/contacts")}
-            startContent={
-              <IconBox
-                w="56px"
-                h="56px"
-                bg={boxBg}
-                icon={
-                  <Icon w="32px" h="32px" as={MdContacts} color={brandColor} />
-                }
-              />
-            }
-            name="Contacts"
-            value={findModuleData("Contacts")}
-          />}
-        {(leadView?.create || leadView?.update || leadView?.delete || leadView?.view) && (leadModule?.isActive) &&
-          <MiniStatistics
-            onClick={() => navigate("/lead")}
-            startContent={
-              <IconBox
-                w="56px"
-                h="56px"
-                bg={boxBg}
-                icon={
-                  <Icon w="32px" h="32px" as={MdLeaderboard} color={brandColor} />
-                }
-              />
-            }
-            name="Leads"
-            value={findModuleData("Leads")}
-          />}
-        {(proprtyView?.create || proprtyView?.update || proprtyView?.delete || proprtyView?.view) && (propertiesModule?.isActive) &&
-          <MiniStatistics
-            onClick={() => navigate("/properties")}
-            startContent={
-              <IconBox
-                w="56px"
-                h="56px"
-                bg={boxBg}
-                icon={
-                  <Icon w="32px" h="32px" as={LuBuilding2} color={brandColor} />
-                }
-              />
-            }
-            name="Property"
-            value={findModuleData("Properties")}
-          />}
+    <Card
+      p="18px"
+      border="1px solid"
+      borderColor={borderColor}
+      cursor={onClick ? "pointer" : "default"}
+      transition="transform .16s ease, box-shadow .16s ease"
+      _hover={onClick ? { transform: "translateY(-1px)", boxShadow: "0 14px 30px -24px rgba(15,23,42,.5)" } : undefined}
+      onClick={onClick}
+    >
+      <Flex align="center" gap="12px">
+        <Flex
+          align="center"
+          justify="center"
+          w={{ base: "34px", md: "40px" }}
+          h={{ base: "34px", md: "40px" }}
+          borderRadius="12px"
+          bg={tint}
+          flexShrink={0}
+        >
+          <Icon as={icon} color="white" boxSize="16px" />
+        </Flex>
+        <Box minW="0">
+          <Text
+            fontSize={{ base: "9px", md: "11px" }}
+            fontWeight="700"
+            letterSpacing="0.04em"
+            textTransform="uppercase"
+            color={muted}
+            noOfLines={2}
+            lineHeight="1.25"
+          >
+            {label}
+          </Text>
+          <Text fontSize={{ base: "20px", md: "24px" }} fontWeight="800" lineHeight="1.1" color={textColor}>
+            {loading ? "—" : value}
+          </Text>
+          <Text fontSize={{ base: "10px", md: "11px" }} color={muted} noOfLines={1}>
+            {hint}
+          </Text>
+        </Box>
+      </Flex>
+    </Card>
+  );
+};
+
+const LeadRow = ({ lead, muted, textColor, onClick, hoverBg }) => (
+  <Flex
+    align="center"
+    justify="space-between"
+    gap="10px"
+    py="10px"
+    px="8px"
+    borderRadius="10px"
+    cursor="pointer"
+    _hover={{ bg: hoverBg }}
+    onClick={onClick}
+  >
+    <HStack spacing="10px" minW="0">
+      <Avatar size="xs" name={initials(lead.leadName || lead.name)} bg="brand.100" color="brand.700" fontWeight="800" />
+      <Box minW="0">
+        <Text fontSize="sm" fontWeight="700" color={textColor} noOfLines={1}>
+          {lead.leadName || lead.name || "Sin nombre"}
+        </Text>
+        <Text fontSize="xs" color={muted} noOfLines={1}>
+          {lead.leadSource || lead.leadStatus || "Lead"} · {formatDate(lead.createdDate || lead.created_at)}
+        </Text>
+      </Box>
+    </HStack>
+    <Icon as={FaArrowRight} boxSize="10px" color={muted} />
+  </Flex>
+);
+
+const HotProspect = ({ lead, muted, textColor, borderColor, onOpen }) => (
+  <Flex
+    align="center"
+    justify="space-between"
+    gap="10px"
+    py="10px"
+    borderBottom="1px solid"
+    borderColor={borderColor}
+  >
+    <Box minW="0" flex="1">
+      <Text fontSize="sm" fontWeight="700" color={textColor} noOfLines={1}>
+        {lead.userName}
+      </Text>
+      <Text fontSize="xs" color={muted} noOfLines={1}>
+        {lead.zone} · <Text as="span" fontWeight="700" color={textColor}>{lead.priceDisplay}</Text>
+      </Text>
+    </Box>
+
+    <HStack spacing="6px" flexShrink={0}>
+      <Badge colorScheme={scoreScheme(lead.leadScore)} borderRadius="full" fontSize="10px" fontWeight="800">
+        {lead.leadScore}
+      </Badge>
+      {lead.phone ? (
+        <Tooltip label={lead.phone} hasArrow>
+          <IconButton
+            as="a"
+            href={lead.whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`WhatsApp ${lead.phone}`}
+            icon={<Icon as={FaWhatsapp} boxSize="13px" />}
+            size="xs"
+            bg="#25D366"
+            color="white"
+            borderRadius="full"
+            _hover={{ bg: "#1eb85a" }}
+            w="28px"
+            h="28px"
+            minW="28px"
+          />
+        </Tooltip>
+      ) : (
+        <Button size="xs" variant="ghost" color={muted} onClick={onOpen}>
+          Ver
+        </Button>
+      )}
+    </HStack>
+  </Flex>
+);
+
+export default function AdminSummary() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [hotLeads, setHotLeads] = useState([]);
+
+  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const muted = useColorModeValue("secondaryGray.500", "secondaryGray.400");
+  const borderColor = useColorModeValue("secondaryGray.400", "whiteAlpha.100");
+  const softBg = useColorModeValue("secondaryGray.100", "whiteAlpha.100");
+  const hoverBg = useColorModeValue("secondaryGray.200", "whiteAlpha.100");
+  const hoverSoftBg = useColorModeValue("secondaryGray.200", "whiteAlpha.200");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [propertiesRes, leadsRes, contactsRes, statsRes, hotRes] = await Promise.all([
+      getApi("api/property/"),
+      getApi("api/lead/"),
+      getApi("api/contact/"),
+      getApi("api/facebook-scraper/stats"),
+      getApi("api/facebook-scraper/leads?hotOnly=true&sort=score&limit=4"),
+    ]);
+
+    setProperties(toArray(propertiesRes));
+    setLeads(toArray(leadsRes));
+    setContacts(toArray(contactsRes));
+    if (statsRes?.status === 200) setStats(statsRes.data);
+    if (hotRes?.status === 200) setHotLeads(hotRes.data.items || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    document.title = "Inicio · Nova CRM";
+    load();
+  }, [load]);
+
+  const portfolioValue = properties.reduce((acc, property) => acc + (Number(property.price) || 0), 0);
+
+  const kpis = [
+    {
+      label: "Propiedades",
+      value: properties.length,
+      hint: `${portfolioValue > 0 ? money(portfolioValue) : "Sin inventario"} en cartera`,
+      icon: FaBuilding,
+      tint: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+      onClick: () => navigate("/properties"),
+    },
+    {
+      label: "Leads",
+      value: leads.length,
+      hint: "Prospectos del CRM",
+      icon: FaUserFriends,
+      tint: "linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%)",
+      onClick: () => navigate("/lead"),
+    },
+    {
+      label: "Contactos",
+      value: contacts.length,
+      hint: "Personas en tu base",
+      icon: FaUsers,
+      tint: "linear-gradient(135deg, #14B8A6 0%, #2DD4BF 100%)",
+      onClick: () => navigate("/contacts"),
+    },
+    {
+      label: "Prospectos FB",
+      value: stats?.total || 0,
+      hint: `${stats?.hot || 0} calientes`,
+      icon: FaFire,
+      tint: "linear-gradient(135deg, #F97316 0%, #FBBF24 100%)",
+      onClick: () => navigate("/prospector-fb"),
+    },
+    {
+      label: "Cruces",
+      value: stats?.matches || 0,
+      hint: "Demanda ↔ oferta",
+      icon: FaHandshake,
+      tint: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
+      onClick: () => navigate("/prospector-fb"),
+    },
+  ];
+
+  const recentProperties = properties.slice(0, 4);
+  const recentLeads = leads.slice(0, 5);
+
+  return (
+    <Box>
+      {/* Encabezado */}
+      <Flex justify="space-between" align={{ base: "flex-start", md: "center" }} gap="14px" mb="20px" wrap="wrap">
+        <Box>
+          <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="800" color={textColor} lineHeight="1.2">
+            Hola, {user?.firstName || "equipo"} 👋
+          </Text>
+          <Text fontSize="sm" color={muted}>
+            Este es el pulso de tu cartera y tu prospección de hoy.
+          </Text>
+        </Box>
+        <HStack spacing="8px" wrap="wrap">
+          <Button size="sm" variant="lightBrand" leftIcon={<Icon as={FaPlus} boxSize="10px" />} onClick={() => navigate("/properties")}>
+            Propiedad
+          </Button>
+          <Button size="sm" variant="lightBrand" leftIcon={<Icon as={FaPlus} boxSize="10px" />} onClick={() => navigate("/lead")}>
+            Lead
+          </Button>
+          <Button size="sm" variant="brand" leftIcon={<Icon as={FaFire} boxSize="10px" />} onClick={() => navigate("/prospector-fb?nueva=1")}>
+            Nueva extracción
+          </Button>
+        </HStack>
+      </Flex>
+
+      {/* KPIs */}
+      <SimpleGrid columns={{ base: 2, md: 3, xl: 5 }} gap="14px" mb="18px">
+        {kpis.map((kpi) => (
+          <KpiCard key={kpi.label} {...kpi} loading={loading} />
+        ))}
       </SimpleGrid>
 
-      <Grid Grid templateColumns="repeat(12, 1fr)" gap={3} >
-        {
-          (emailModule?.isActive || callModule?.isActive) &&
-          <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
-            <Card>
-              <Flex mb={3} alignItems={"center"} justifyContent={"space-between"}>
-                <Heading size="md">{(emailModule?.isActive && callModule?.isActive) ? "Email and Call" : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : ""} Report</Heading>
-                {
-                  reportModule?.isActive &&
-                  <IconButton
-                    color={"green.500"}
-                    onClick={() => navigate("/reporting-analytics")}
-                    aria-label="Call Fred"
-                    borderRadius="10px"
-                    size="md"
-                    icon={<ViewIcon />}
-                  />
-                }
-              </Flex>
-              <HSeparator />
-              <ReportChart dashboard={"dashboard"} />
-            </Card>
-          </GridItem>
-        }
-        <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
-          <Card>
-            <Flex mb={5} alignItems={"center"} justifyContent={"space-between"}>
-              <Heading size="md">Module Data Report</Heading>
-
-            </Flex>
-            <Box mb={3}>
-              <HSeparator />
-            </Box>
-            <Chart dashboard={"dashboard"} data={data} />
-          </Card>
-        </GridItem>
-      </Grid>
-      <SimpleGrid gap="20px" columns={{
-        base: 1, md: leadView?.view && taskView?.view ? 2 : 2, lg:
-          leadView?.view && taskView?.view ? 3 : 2
-      }} my="20px">
-
-        {
-          data && data.length > 0 &&
-          <Card >
-            <Heading size="md" pb={3}>Statistics</Heading>
-            {
-              !isLoding ?
-                data && data.length > 0 && data?.map((item, i) => (
-                  <>
-                    <Box border={"1px solid #e5e5e5"} p={2} m={1} cursor={'pointer'} key={i} onClick={() => navigate(navigateTo[item.name])}>
-                      <Flex justifyContent={"space-between"}>
-                        <Text fontSize="sm" fontWeight={600} pb={2}>{item?.name}</Text>
-                        <Text fontSize="sm" fontWeight={600} pb={2}><CountUpComponent targetNumber={item?.length} /></Text>
-                      </Flex>
-                      <Progress
-                        colorScheme={item?.color}
-                        size='xs' value={item?.length} width={"100%"} />
-                    </Box>
-                  </>
-
-                )) : <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}><Spinner /></div>
-            }
-          </Card>
-        }
-
-        {leadView?.view && (leadModule?.isActive) && <Card>
-          <Heading size="md" pb={2}>Lead Statistics</Heading>
-          {(leadView?.view) &&
-            <Grid templateColumns="repeat(12, 1fr)" gap={2}>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#ebf5ff"}
-                  borderRadius={"10px"}
-                  cursor={"pointer"}
-                  onClick={() => navigate('/lead')}
-                  p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#1f7eeb"}>Total Leads </Heading>
-                  <Text fontWeight={600} color={"#1f7eeb"}><CountUpComponent targetNumber={allData?.leadData?.length || 0} /> </Text>
-                </Box>
-              </GridItem>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#eaf9e6"}
-                  borderRadius={"10px"}
-                  cursor={"pointer"}
-                  onClick={() => navigate('/lead', { state: 'active' })}
-                  p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#43882f"} >Active Leads </Heading>
-                  <Text fontWeight={600} color={"#43882f"}><CountUpComponent targetNumber={findLeadStatus("active")} /></Text>
-                </Box>
-              </GridItem>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#fbf4dd"}
-                  onClick={() => navigate('/lead', { state: 'pending' })}
-                  borderRadius={"10px"}
-                  cursor={"pointer"}
-                  p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#a37f08"}>Pending Leads</Heading>
-                  <Text fontWeight={600} color={"#a37f08"}><CountUpComponent targetNumber={findLeadStatus("pending")} /></Text>
-                </Box>
-              </GridItem>
-
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#ffeeeb"}
-                  borderRadius={"10px"}
-                  cursor={"pointer"}
-                  onClick={() => navigate('/lead', { state: 'sold' })}
-                  p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#d6401d"}>Sold Leads </Heading>
-                  <Text fontWeight={600} color={"#d6401d"}><CountUpComponent targetNumber={findLeadStatus("sold")} /></Text>
-                </Box>
-              </GridItem>
-            </Grid>
-          }
-          <Flex justifyContent={"center"}  >
-            <PieChart leadData={allData?.leadData} />
+      <SimpleGrid columns={{ base: 1, xl: 3 }} gap="16px" alignItems="start">
+        {/* Últimos leads */}
+        <Card p="20px" gridColumn={{ base: "auto", xl: "span 2" }}>
+          <Flex justify="space-between" align="center" mb="8px" gap="10px" wrap="wrap">
+            <HStack spacing="8px">
+              <Icon as={FaUserFriends} boxSize="13px" color="brand.500" />
+              <Text fontWeight="800" color={textColor}>
+                Últimos leads
+              </Text>
+            </HStack>
+            <Button size="xs" variant="ghost" color={muted} rightIcon={<Icon as={FaArrowRight} boxSize="9px" />} onClick={() => navigate("/lead")}>
+              Ver todos
+            </Button>
           </Flex>
 
-        </Card>}
-
-        {taskView?.view && (tasksModule?.isActive) && <Card >
-          <Heading size="md" pb={3}>Task Statistics</Heading>
-          <Grid templateColumns="repeat(12, 1fr)" gap={2} mb={2}>
-            <GridItem colSpan={{ base: 12 }}>
-              <Box backgroundColor={"#ebf5ff"}
-                onClick={() => navigate('/task')}
-                borderRadius={"10px"} cursor={'pointer'}
-                p={2} m={1} textAlign={"center"}>
-                <Heading size="sm" pb={3} color={"#1f7eeb"}>Total Tasks </Heading>
-                <Text fontWeight={600} color={"#1f7eeb"}><CountUpComponent targetNumber={allData?.taskData?.length || 0} /></Text>
-              </Box>
-            </GridItem>
-          </Grid>
-          {taskStatus && taskStatus.length > 0 && taskStatus?.map((item, i) => (
-            <Box my={1.5} key={i}>
-              {/* <Flex justifyContent={"space-between"} cursor={'pointer'} onClick={() => navigate('/task', { state: item.status })} alignItems={"center"} padding={4} backgroundColor={"#0b0b0b17"} borderRadius={"10px"}> */}
-              <Flex justifyContent={"space-between"} cursor={'pointer'} alignItems={"center"} padding={4} backgroundColor={"#0b0b0b17"} borderRadius={"10px"}>
-                <Flex alignItems={"center"}>
-                  <Box height={"18px"} width={"18px"} lineHeight={"18px"} textAlign={"center"} border={`1px solid ${item.color}`} display={"flex"} justifyContent={"center"} alignItems={"center"} borderRadius={"50%"} margin={"0 auto"} >
-                    <Box backgroundColor={`${item.color}`} height={"10px"} width={"10px"} borderRadius={"50%"}></Box>
-                  </Box>
-
-                  <Text ps={2} fontWeight={"bold"} color={`${item.color}`}>{item.name}</Text>
-
-                </Flex>
-                <Box fontWeight={"bold"} color={`${item.color}`}><CountUpComponent targetNumber={item?.length} /></Box>
-              </Flex>
+          {loading ? (
+            <Box>
+              {[0, 1, 2, 3].map((key) => (
+                <Skeleton key={key} height="46px" borderRadius="10px" mb="8px" />
+              ))}
             </Box>
-          ))}
-        </Card>}
-      </SimpleGrid>
+          ) : recentLeads.length === 0 ? (
+            <Flex direction="column" align="center" py="26px" gap="8px" textAlign="center">
+              <Text fontSize="sm" color={muted}>
+                Aún no hay leads registrados. Crea el primero o envíalos desde el Prospector.
+              </Text>
+              <Button size="sm" variant="brand" onClick={() => navigate("/lead")}>
+                Ir a Leads
+              </Button>
+            </Flex>
+          ) : (
+            <Flex direction="column">
+              {recentLeads.map((lead, index) => (
+                <LeadRow
+                  key={lead._id || index}
+                  lead={lead}
+                  muted={muted}
+                  textColor={textColor}
+                  onClick={() => navigate(`/leadView/${lead._id}`)}
+                  hoverBg={hoverBg}
+                />
+              ))}
+            </Flex>
+          )}
 
-    </>
+          <Box mt="16px" pt="14px" borderTop="1px solid" borderColor={borderColor}>
+            <Flex justify="space-between" align="center" mb="8px">
+              <HStack spacing="8px">
+                <Icon as={FaBuilding} boxSize="12px" color="brand.500" />
+                <Text fontSize="sm" fontWeight="800" color={textColor}>
+                  Propiedades recientes
+                </Text>
+              </HStack>
+              <Button size="xs" variant="ghost" color={muted} rightIcon={<Icon as={FaArrowRight} boxSize="9px" />} onClick={() => navigate("/properties")}>
+                Ver todas
+              </Button>
+            </Flex>
+
+            {loading ? (
+              <Skeleton height="60px" borderRadius="10px" />
+            ) : recentProperties.length === 0 ? (
+              <Text fontSize="sm" color={muted}>
+                Sin propiedades registradas todavía.
+              </Text>
+            ) : (
+              <Wrap spacing="8px">
+                {recentProperties.map((property) => (
+                  <WrapItem key={property._id}>
+                    <Flex
+                      direction="column"
+                      p="10px 12px"
+                      borderRadius="10px"
+                      bg={softBg}
+                      minW="170px"
+                      cursor="pointer"
+                      _hover={{ bg: hoverSoftBg }}
+                      onClick={() => navigate(`/propertyView/${property._id}`)}
+                    >
+                      <Text fontSize="sm" fontWeight="700" color={textColor} noOfLines={1}>
+                        {property.propertyName || property.name || "Propiedad"}
+                      </Text>
+                      <Text fontSize="xs" color={muted} noOfLines={1}>
+                        {property.location || "Sin ubicación"}
+                      </Text>
+                      <Text fontSize="sm" fontWeight="800" color="brand.600" mt="2px">
+                        {money(property.price)}
+                      </Text>
+                    </Flex>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            )}
+          </Box>
+        </Card>
+
+        {/* Prospección */}
+        <Flex direction="column" gap="16px">
+          <Card p="20px">
+            <Flex justify="space-between" align="center" mb="8px">
+              <HStack spacing="8px">
+                <Icon as={FaFire} boxSize="12px" color="orange.400" />
+                <Text fontWeight="800" color={textColor}>
+                  Prospectos calientes
+                </Text>
+              </HStack>
+              <Button size="xs" variant="ghost" color={muted} rightIcon={<Icon as={FaArrowRight} boxSize="9px" />} onClick={() => navigate("/prospector-fb")}>
+                Ver
+              </Button>
+            </Flex>
+
+            {loading ? (
+              <Skeleton height="80px" borderRadius="10px" />
+            ) : hotLeads.length === 0 ? (
+              <Text fontSize="sm" color={muted}>
+                Sin prospectos calientes. Lanza una extracción de tus grupos.
+              </Text>
+            ) : (
+              <Box>
+                {hotLeads.map((lead) => (
+                  <HotProspect
+                    key={lead._id}
+                    lead={lead}
+                    muted={muted}
+                    textColor={textColor}
+                    borderColor={borderColor}
+                    onOpen={() => navigate("/prospector-fb")}
+                  />
+                ))}
+              </Box>
+            )}
+          </Card>
+
+          <Card p="20px" bg="linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)" color="white">
+            <Text fontSize="sm" fontWeight="800">
+              Prospector Facebook
+            </Text>
+            <Text fontSize="xs" color="whiteAlpha.800" mt="4px">
+              {stats?.total || 0} prospectos detectados · {stats?.withPhone || 0} con WhatsApp
+            </Text>
+            <Button
+              mt="12px"
+              size="sm"
+              bg="white"
+              color="brand.700"
+              _hover={{ bg: "whiteAlpha.900" }}
+              rightIcon={<Icon as={FaArrowRight} boxSize="9px" />}
+              onClick={() => navigate("/prospector-fb")}
+              w="100%"
+            >
+              Abrir bandeja
+            </Button>
+          </Card>
+        </Flex>
+      </SimpleGrid>
+    </Box>
   );
 }

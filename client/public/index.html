@@ -1,21 +1,90 @@
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
   <meta charset="utf-8" />
   <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#000000" />
-  <title itemprop="name">Nova CRM</title>
+  <meta name="theme-color" content="#4F46E5" />
+  <meta name="description" content="Nova Real Estate · Catálogo de casas y departamentos en Monterrey. Asesoría personalizada para comprar, rentar o invertir." />
+  <title>Nova CRM</title>
+
   <!-- Manifest and apple icon -->
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <!-- Fuentes: la landing pública usa Tailwind, el CRM usa Chakra -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind (solo lo consume la landing pública) -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+          },
+          colors: {
+            brand: {
+              50: "#EEF2FF",
+              100: "#E0E7FF",
+              200: "#C7D2FE",
+              300: "#A5B4FC",
+              400: "#818CF8",
+              500: "#6366F1",
+              600: "#4F46E5",
+              700: "#4338CA",
+              800: "#3730A3",
+              900: "#312E81",
+            },
+          },
+          boxShadow: {
+            card: "0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* Reinicio acotado a la landing: evita que el preflight global afecte al CRM. */
+    .nova-landing,
+    .nova-landing * ,
+    .nova-landing *::before,
+    .nova-landing *::after {
+      box-sizing: border-box;
+    }
+    :where(.nova-landing) :where(h1, h2, h3, h4, p, figure, blockquote) {
+      margin: 0;
+    }
+    :where(.nova-landing) :where(ul, ol) {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    :where(.nova-landing) :where(img, svg) {
+      display: block;
+      max-width: 100%;
+    }
+    :where(.nova-landing) :where(button) {
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+    .nova-landing {
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+  </style>
 </head>
 
 <body>
-  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <noscript>Necesitas habilitar JavaScript para ver este sitio.</noscript>
   <div id="root"></div>
 </body>
 

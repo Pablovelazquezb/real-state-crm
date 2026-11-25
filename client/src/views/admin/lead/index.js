@@ -231,7 +231,7 @@ const Index = () => {
       const tempTableColumns = [
         { Header: "#", accessor: "_id", isSortable: false, width: 10 },
         {
-          Header: "Status",
+          Header: "Estado",
           accessor: "leadStatus",
           isSortable: true,
           center: true,

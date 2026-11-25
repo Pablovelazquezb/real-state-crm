@@ -29,10 +29,7 @@ function Sidebar(props) {
   const { routes, setOpenSidebar, openSidebar, largeLogo } = props;
 
   let variantChange = "0.2s linear";
-  let shadow = useColorModeValue(
-    "14px 17px 40px 4px rgba(112, 144, 176, 0.08)",
-    "unset",
-  );
+  let borderColor = useColorModeValue("secondaryGray.400", "whiteAlpha.100");
   // Chakra Color Mode
   let sidebarBg = useColorModeValue("white", "navy.800");
   let sidebarMargins = "0px";
@@ -54,7 +51,8 @@ function Sidebar(props) {
         m={sidebarMargins}
         minH="100%"
         overflowX="hidden"
-        boxShadow={shadow}
+        borderRight="1px solid"
+        borderColor={borderColor}
       >
         <Scrollbars
           autoHide

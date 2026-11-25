@@ -57,7 +57,7 @@ const CustomSearchInput = ({
         value={searchbox}
         onChange={handleInputChange}
         fontWeight="500"
-        placeholder="Search..."
+        placeholder="Buscar..."
         borderRadius="16px"
       />
     </InputGroup>

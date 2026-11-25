@@ -3,9 +3,10 @@ export const buttonStyles = {
   components: {
     Button: {
       baseStyle: {
-        borderRadius: "16px",
-        boxShadow: "45px 76px 113px 7px rgba(112, 144, 176, 0.08)",
-        transition: ".25s all ease",
+        borderRadius: "10px",
+        fontWeight: "600",
+        boxShadow: "none",
+        transition: ".18s ease",
         boxSizing: "border-box",
         _focus: {
           boxShadow: "none",
@@ -16,19 +17,20 @@ export const buttonStyles = {
       },
       variants: {
         outline: () => ({
-          borderRadius: "16px",
+          borderRadius: "10px",
         }),
         brand: (props) => ({
-          bg: mode("brand.500", "brand.400")(props),
+          bg: mode("brand.600", "brand.500")(props),
           color: "white",
+          boxShadow: "0 1px 2px rgba(79, 70, 229, 0.25)",
           _focus: {
-            bg: mode("brand.500", "brand.400")(props),
+            bg: mode("brand.600", "brand.500")(props),
           },
           _active: {
-            bg: mode("brand.500", "brand.400")(props),
+            bg: mode("brand.700", "brand.600")(props),
           },
           _hover: {
-            bg: mode("brand.600", "brand.400")(props),
+            bg: mode("brand.700", "brand.600")(props),
           },
         }),
         darkBrand: (props) => ({
@@ -45,16 +47,16 @@ export const buttonStyles = {
           },
         }),
         lightBrand: (props) => ({
-          bg: mode("#F2EFFF", "whiteAlpha.100")(props),
-          color: mode("brand.500", "white")(props),
+          bg: mode("brand.50", "whiteAlpha.100")(props),
+          color: mode("brand.700", "white")(props),
           _focus: {
-            bg: mode("#F2EFFF", "whiteAlpha.100")(props),
+            bg: mode("brand.50", "whiteAlpha.100")(props),
           },
           _active: {
-            bg: mode("secondaryGray.300", "whiteAlpha.100")(props),
+            bg: mode("brand.100", "whiteAlpha.200")(props),
           },
           _hover: {
-            bg: mode("secondaryGray.400", "whiteAlpha.200")(props),
+            bg: mode("brand.100", "whiteAlpha.200")(props),
           },
         }),
         light: (props) => ({

@@ -25,12 +25,10 @@ import { fetchImage } from "../../redux/slices/imageSlice";
 import { getApi } from "services/api";
 import DynamicPage from "views/admin/dynamicPage";
 import { LuChevronRightCircle } from "react-icons/lu";
-import { FaCalendarAlt } from "react-icons/fa";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 
-const MainDashboard = React.lazy(() => import("views/admin/default"));
+const EmployeeHome = React.lazy(() => import("views/admin/employeeHome"));
 const SignInCentered = React.lazy(() => import("views/auth/signIn"));
-const Calender = React.lazy(() => import("views/admin/calender"));
 const UserView = React.lazy(() => import("views/admin/users/View"));
 
 // Custom Chakra theme
@@ -96,11 +94,13 @@ export default function User(props) {
 
   let routes = [
     {
-      name: "Dashboard",
+      name: "Mi panel",
+      label: "Mi panel",
+      section: "Operación",
       layout: [ROLE_PATH.user],
       path: "/default",
       icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
-      component: MainDashboard,
+      component: EmployeeHome,
     },
     {
       name: "Sign In",
@@ -108,15 +108,6 @@ export default function User(props) {
       path: "/sign-in",
       icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
       component: SignInCentered,
-    },
-    {
-      name: "Calender",
-      layout: [ROLE_PATH.user],
-      path: "/calender",
-      icon: (
-        <Icon as={FaCalendarAlt} width="20px" height="20px" color="inherit" />
-      ),
-      component: Calender,
     },
     {
       name: "User View",
@@ -173,6 +164,8 @@ export default function User(props) {
   );
   routes.push(...activeRoutes);
 
+  // El calendario (tareas, llamadas, juntas) es administrativo: no se muestra al empleado.
+
   const getActiveRoute = (routes) => {
     let activeRoute = "Prolink";
     for (let i = 0; i < routes.length; i++) {
@@ -191,7 +184,7 @@ export default function User(props) {
           window.location.href.indexOf(routes[i].path.replace("/:id", "")) !==
           -1
         ) {
-          return routes[i].name;
+          return routes[i].label || routes[i].name;
         }
       }
     }
@@ -374,16 +367,15 @@ export default function User(props) {
                 />
               </Box>
             </Portal>
-            <Box pt={{ base: "150px", md: "95px", xl: "95px" }}>
+            <Box pt={{ base: "84px", md: "88px" }}>
               {getRoute() ? (
                 <Box
                   mx="auto"
                   pe="20px"
                   minH="84vh"
-                  pt="50px"
-                  style={{
-                    padding: openSidebar ? "8px 20px 8px 20px" : "8px 20px",
-                  }}
+                  px={{ base: "16px", md: "28px" }}
+                  pt="24px"
+                  pb="8px"
                 >
                   <Suspense
                     fallback={

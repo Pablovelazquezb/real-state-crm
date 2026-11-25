@@ -445,6 +445,7 @@ const CommonCheckTable = (props) => {
       <Card
         direction="column"
         w="100%"
+        h="fit-content"
         overflowX={{ sm: "scroll", lg: "hidden" }}
       >
         <Grid templateColumns="repeat(12, 1fr)" gap={2}>
@@ -455,20 +456,25 @@ const CommonCheckTable = (props) => {
           >
             <Flex alignItems={"center"} flexWrap={"wrap"}>
               {title && (
-                <Text
-                  color={"secondaryGray.900"}
-                  fontSize="22px"
-                  fontWeight="700"
-                  lineHeight="100%"
-                  textTransform={"capitalize"}
-                >
-                  {title} (
-                  <CountUpComponent
-                    key={data?.length}
-                    targetNumber={dataLength || data?.length}
-                  />
-                  )
-                </Text>
+                <Flex align="baseline" gap="8px" me="12px">
+                  <Text
+                    color={"secondaryGray.900"}
+                    fontSize="20px"
+                    fontWeight="800"
+                    lineHeight="1.1"
+                    textTransform={"capitalize"}
+                    letterSpacing="-0.02em"
+                  >
+                    {title}
+                  </Text>
+                  <Text fontSize="xs" fontWeight="700" color="secondaryGray.500">
+                    <CountUpComponent
+                      key={data?.length}
+                      targetNumber={dataLength || data?.length}
+                    />{" "}
+                    registros
+                  </Text>
+                </Flex>
               )}
               {customSearch !== false && (
                 <CustomSearchInput
@@ -503,7 +509,7 @@ const CommonCheckTable = (props) => {
                       size="sm"
                       onClick={() => setAdvaceSearch(true)}
                     >
-                      Advance Search
+                      Búsqueda avanzada
                     </Button>
                   )}
               {searchDisplay || displaySearchData ? (
@@ -514,7 +520,7 @@ const CommonCheckTable = (props) => {
                   ms={2}
                   onClick={() => handleClear()}
                 >
-                  Clear
+                  Limpiar
                 </Button>
               ) : (
                 ""
@@ -564,12 +570,12 @@ const CommonCheckTable = (props) => {
                     width={"165px"}
                   >
                     {" "}
-                    Manage Columns
+                    Columnas
                   </MenuItem>
                   {typeof setIsImport === "function" && (
                     <MenuItem width={"165px"} onClick={() => setIsImport(true)}>
                       {" "}
-                      Import {title}
+                      Importar
                     </MenuItem>
                   )}
                   {exportColumn !== false && allData && allData?.length > 0 && (
@@ -580,16 +586,16 @@ const CommonCheckTable = (props) => {
                         onClick={() => handleExportLeads("csv")}
                       >
                         {selectedValues && selectedValues?.length > 0
-                          ? "Export Selected Data as CSV"
-                          : "Export as CSV"}
+                          ? "Exportar selección (CSV)"
+                          : "Exportar CSV"}
                       </MenuItem>
                       <MenuItem
                         width={"165px"}
                         onClick={() => handleExportLeads("xlsx")}
                       >
                         {selectedValues && selectedValues?.length > 0
-                          ? "Export Selected Data as Excel"
-                          : "Export as Excel"}
+                          ? "Exportar selección (Excel)"
+                          : "Exportar Excel"}
                       </MenuItem>
                     </>
                   )}
@@ -603,7 +609,7 @@ const CommonCheckTable = (props) => {
                 variant="brand"
                 leftIcon={<AddIcon />}
               >
-                Add New
+                Agregar
               </Button>
             )}
             {BackButton && BackButton}
@@ -627,12 +633,20 @@ const CommonCheckTable = (props) => {
         <Box
           overflowY={"auto"}
           className={size ? `small-table-fix-container` : `table-fix-container`}
+          border="1px solid"
+          borderColor={borderColor}
+          borderRadius="14px"
         >
           <Table
             {...getTableProps()}
             variant="simple"
             color="gray.500"
-            mb="24px"
+            mb="0"
+            sx={{
+              "th": { bg: "secondaryGray.100" },
+              "tbody tr": { transition: "background .12s ease" },
+              "tbody tr:hover": { bg: "secondaryGray.100" },
+            }}
           >
             <Thead zIndex={1}>
               {headerGroups?.map((headerGroup, index) => (
@@ -643,15 +657,25 @@ const CommonCheckTable = (props) => {
                         column?.isSortable !== false &&
                           column?.getSortByToggleProps()
                       )}
-                      pe="10px"
                       key={index}
                       borderColor={borderColor}
+                      px="14px"
+                      py="12px"
+                      position="sticky"
+                      top="0"
+                      zIndex={1}
+                      bg="secondaryGray.100"
+                      _first={{ borderTopLeftRadius: "14px" }}
+                      _last={{ borderTopRightRadius: "14px" }}
                     >
                       <Flex
                         align="center"
                         justifyContent={column?.center ? "center" : "start"}
-                        fontSize={{ sm: "14px", lg: "16px" }}
-                        color="secondaryGray.900"
+                        fontSize="11px"
+                        fontWeight="800"
+                        letterSpacing="0.06em"
+                        textTransform="uppercase"
+                        color="secondaryGray.500"
                       >
                         <span
                           style={{
@@ -659,7 +683,9 @@ const CommonCheckTable = (props) => {
                             marginRight: "8px",
                           }}
                         >
-                          {column?.render("Header")}
+                          {column?.render("Header") === "Action"
+                            ? "Acciones"
+                            : column?.render("Header")}
                         </span>
                         {column?.isSortable !== false && (
                           <span>
@@ -699,15 +725,7 @@ const CommonCheckTable = (props) => {
               ) : (data && data?.length === 0) || data === undefined ? (
                 <Tr>
                   <Td colSpan={columns?.length}>
-                    <Text
-                      textAlign={"center"}
-                      width="100%"
-                      color={textColor}
-                      fontSize="sm"
-                      fontWeight="700"
-                    >
-                      <DataNotFound />
-                    </Text>
+                    <DataNotFound />
                   </Td>
                 </Tr>
               ) : (
@@ -783,9 +801,11 @@ const CommonCheckTable = (props) => {
                           <Td
                             {...cell?.getCellProps()}
                             key={index}
-                            fontSize={{ sm: "14px" }}
-                            minW={{ sm: "150px", md: "200px", lg: "auto" }}
-                            borderColor="transparent"
+                            fontSize="sm"
+                            px="14px"
+                            py="12px"
+                            minW={{ base: "120px", md: "140px", lg: "auto" }}
+                            borderColor={borderColor}
                           >
                             {data}
                           </Td>
@@ -826,7 +846,7 @@ const CommonCheckTable = (props) => {
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Manage Columns</ModalHeader>
+            <ModalHeader>Columnas de la tabla</ModalHeader>
             <ModalCloseButton
               onClick={() => {
                 setManageColumnsModel(false);

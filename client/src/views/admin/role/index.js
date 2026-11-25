@@ -27,7 +27,7 @@ const Index = () => {
       display: false,
     },
     {
-      Header: "Role Name",
+      Header: "Rol",
       accessor: "roleName",
       cell: (cell) => (
         <Text
@@ -53,7 +53,7 @@ const Index = () => {
         </Text>
       ),
     },
-    { Header: "Description", accessor: "description" },
+    { Header: "Descripción", accessor: "description" },
   ];
   const rowColumns = [
     {
@@ -113,7 +113,7 @@ const Index = () => {
             leftIcon={<IoIosArrowBack />}
             ml={2}
           >
-            Back
+            Volver
           </Button>
         }
         deleteMany={true}

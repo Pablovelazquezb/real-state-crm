@@ -16,22 +16,24 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Text,
 } from "@chakra-ui/react";
 import Spinner from "components/spinner/Spinner";
 import { useFormik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
 import { toast } from "react-toastify";
 import { userSchema } from "schema";
-import { postApi } from "services/api";
+import { getApi, postApi } from "services/api";
 
 const AddUser = (props) => {
   const { onClose, isOpen, setAction } = props;
   const [isLoding, setIsLoding] = useState(false);
 
   const [show, setShow] = React.useState(false);
+  const [roles, setRoles] = React.useState([]);
   const showPass = () => setShow(!show);
 
   const initialValues = {
@@ -40,7 +42,18 @@ const AddUser = (props) => {
     username: "",
     phoneNumber: "",
     password: "",
+    role: "user",
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      const response = await getApi("api/role-access/");
+      if (response?.status === 200 && Array.isArray(response.data)) {
+        setRoles(response.data.map((role) => role.roleName).filter(Boolean));
+      }
+    })();
+  }, [isOpen]);
 
   const formik = useFormik({
     initialValues: initialValues,
@@ -206,6 +219,36 @@ const AddUser = (props) => {
                 {errors?.phoneNumber &&
                   touched?.phoneNumber &&
                   errors?.phoneNumber}
+              </Text>
+            </GridItem>
+            <GridItem colSpan={{ base: 12 }}>
+              <FormLabel
+                display="flex"
+                ms="4px"
+                fontSize="sm"
+                fontWeight="500"
+                mb="8px"
+              >
+                Rol
+              </FormLabel>
+              <Select
+                name="role"
+                value={values?.role}
+                onChange={handleChange}
+                fontSize="sm"
+                borderRadius="16px"
+                fontWeight="500"
+              >
+                <option value="user">Usuario estándar (sin módulos extra)</option>
+                {roles.map((roleName) => (
+                  <option key={roleName} value={roleName}>
+                    {roleName}
+                  </option>
+                ))}
+                <option value="superAdmin">Super Admin (acceso total)</option>
+              </Select>
+              <Text mb="10px" fontSize="xs" color="gray.500">
+                Los permisos de cada rol se configuran en el módulo Roles.
               </Text>
             </GridItem>
             <GridItem colSpan={{ base: 12 }}>

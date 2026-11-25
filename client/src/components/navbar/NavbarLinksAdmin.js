@@ -264,7 +264,7 @@ export default function HeaderLinks(props) {
               borderRadius="8px"
               px="14px"
             >
-              <Text fontSize="sm" onClick={() => navigate(`/admin/`)}>
+              <Text fontSize="sm" onClick={() => navigate("/default")}>
                 Home
               </Text>
             </MenuItem>

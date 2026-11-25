@@ -60,6 +60,7 @@ const AddEditUser = (props) => {
     phoneNumber: userAction === "add" ? "" : data?.phoneNumber,
     password: userAction === "add" ? "" : data?.password,
     roles: userAction === "add" ? [] : data?.roles?.map((item) => item?._id),
+    role: userAction === "add" ? "user" : data?.role || data?.roles?.[0]?.roleName || "user",
   };
   const user = JSON.parse(window.localStorage.getItem("user"));
 
@@ -153,7 +154,18 @@ const AddEditUser = (props) => {
 
   useEffect(() => {
     fetchRoleData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Al editar, se preselecciona el rol actual del usuario.
+  useEffect(() => {
+    if (userAction !== "edit" || !data?.role || !roles?.length) return;
+    const match = roles.find(
+      (item) => String(item.roleName).toLowerCase() === String(data.role).toLowerCase(),
+    );
+    if (match) setFieldValue("roles", [match._id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roles, userAction, data?.role]);
   return (
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
@@ -236,6 +248,10 @@ const AddEditUser = (props) => {
                         changes?.selectedItems
                       );
                       setFieldValue("roles", selectedLabels);
+                      setFieldValue(
+                        "role",
+                        changes?.selectedItems?.[0]?.label || "user",
+                      );
                     }}
                     borderColor={
                       errors?.roles && touched?.roles ? "red.300" : null

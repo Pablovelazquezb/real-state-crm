@@ -5,7 +5,7 @@ export const inputStyles = {
       baseStyle: {
         field: {
           fontWeight: 400,
-          borderRadius: "8px",
+          borderRadius: "10px",
         },
       },
 
@@ -15,8 +15,8 @@ export const inputStyles = {
             bg: mode("transparent", "navy.800")(props),
             border: "1px solid",
             color: mode("secondaryGray.900", "white")(props),
-            borderColor: mode("secondaryGray.100", "whiteAlpha.100")(props),
-            borderRadius: "16px",
+            borderColor: mode("secondaryGray.400", "whiteAlpha.100")(props),
+            borderRadius: "10px",
             fontSize: "sm",
             p: "20px",
             _placeholder: { color: "secondaryGray.400" },
@@ -25,15 +25,19 @@ export const inputStyles = {
         auth: (props) => ({
           field: {
             fontWeight: "500",
-            color: mode("navy.700", "white")(props),
-            bg: mode("transparent", "transparent")(props),
+            color: mode("secondaryGray.900", "white")(props),
+            bg: mode("white", "whiteAlpha.100")(props),
             border: "1px solid",
-            borderColor: mode(
-              "secondaryGray.100",
-              "rgba(135, 140, 189, 0.3)",
-            )(props),
-            borderRadius: "16px",
-            _placeholder: { color: "secondaryGray.600", fontWeight: "400" },
+            borderColor: mode("secondaryGray.400", "whiteAlpha.200")(props),
+            borderRadius: "10px",
+            h: "46px",
+            _placeholder: { color: "secondaryGray.500", fontWeight: "400" },
+            _hover: { borderColor: mode("secondaryGray.500", "whiteAlpha.300")(props) },
+            _focus: {
+              borderColor: "brand.500",
+              boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.16)",
+              bg: mode("white", "whiteAlpha.100")(props),
+            },
           },
         }),
         authSecondary: (props) => ({
@@ -116,8 +120,8 @@ export const inputStyles = {
             bg: mode("transparent", "navy.800")(props),
             border: "1px solid",
             color: "secondaryGray.600",
-            borderColor: mode("secondaryGray.100", "whiteAlpha.100")(props),
-            borderRadius: "16px",
+            borderColor: mode("secondaryGray.400", "whiteAlpha.100")(props),
+            borderRadius: "10px",
             _placeholder: { color: "secondaryGray.600" },
           },
           icon: {

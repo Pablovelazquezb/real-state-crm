@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HasAccess } from "../../../redux/accessUtils";
 import {
+  Badge,
   Grid,
   GridItem,
   Text,
@@ -113,41 +114,53 @@ const Index = () => {
         </Text>
       ),
     };
+    // Columnas pensadas para la operación inmobiliaria (los datos vienen de la API).
     const tempTableColumns = [
       { Header: "#", accessor: "_id", isSortable: false, width: 10 },
-      ...(result?.payload?.data && result.payload.data.length > 0
-        ? result?.payload?.data[0]?.fields
-            ?.filter((field) => field?.isTableField === true && field?.isView)
-            ?.map((field) => ({
-              Header: field?.label,
-              accessor: field?.name,
-              cell: (cell) => (
-                <div className="selectOpt">
-                  <Text
-                    onClick={() => {
-                      navigate(`/propertyView/${cell?.row?.original?._id}`);
-                    }}
-                    me="10px"
-                    sx={{
-                      "&:hover": {
-                        color: "blue.500",
-                        textDecoration: "underline",
-                      },
-                      cursor: "pointer",
-                    }}
-                    color="brand.600"
-                    fontSize="sm"
-                    fontWeight="700"
-                  >
-                    {cell?.value || "-"}
-                  </Text>
-                </div>
-              ),
-            })) || []
-        : []),
-      ...(result?.payload?.data?.[0]?.fields || []) // Ensure result.payload[0].fields is an array
-        .filter((field) => field?.isTableField === true && !field?.isView) // Filter out fields where isTableField is true
-        .map((field) => ({ Header: field?.label, accessor: field?.name })),
+      {
+        Header: "Propiedad",
+        accessor: "name",
+        cell: (cell) => (
+          <Text
+            onClick={() => navigate(`/propertyView/${cell?.row?.original?._id}`)}
+            sx={{ "&:hover": { color: "brand.500", textDecoration: "underline" }, cursor: "pointer" }}
+            color="brand.600"
+            fontSize="sm"
+            fontWeight="700"
+          >
+            {cell?.value || "-"}
+          </Text>
+        ),
+      },
+      { Header: "Tipo", accessor: "propertyType" },
+      {
+        Header: "Precio",
+        accessor: "price",
+        cell: (cell) => (
+          <Text fontSize="sm" fontWeight="700">
+            {Number(cell?.value) > 0
+              ? `$${Number(cell?.value).toLocaleString("es-MX")}`
+              : "-"}
+          </Text>
+        ),
+      },
+      { Header: "Ubicación", accessor: "location" },
+      {
+        Header: "Estado",
+        accessor: "status",
+        cell: (cell) => {
+          const value = String(cell?.value || "").toLowerCase();
+          const scheme =
+            value === "available" ? "green" : value === "pending" ? "orange" : value === "sold" ? "blue" : "gray";
+          const label =
+            value === "available" ? "Disponible" : value === "pending" ? "En proceso" : value === "sold" ? "Vendida" : cell?.value || "-";
+          return (
+            <Badge colorScheme={scheme} borderRadius="full" px="10px" py="2px" fontSize="xs" fontWeight="700">
+              {label}
+            </Badge>
+          );
+        },
+      },
       ...(permission?.update || permission?.view || permission?.delete
         ? [actionHeader]
         : []),
@@ -188,7 +201,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
-              title={"Properties"}
+              title={"Propiedades"}
               isLoding={isLoding}
               columnData={columns ?? []}
               // dataColumn={dataColumn ?? []}

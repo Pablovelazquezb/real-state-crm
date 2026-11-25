@@ -1,55 +1,64 @@
 // Chakra imports
-import { Flex, Heading, Image, useColorModeValue } from "@chakra-ui/react";
+import { Flex, Image, Text, useColorModeValue } from "@chakra-ui/react";
 
 // Custom components
-import { HSeparator } from "components/separator/Separator";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchImage } from "../../../redux/slices/imageSlice";
-
 export function SidebarBrand(props) {
   const { setOpenSidebar, openSidebar, from, largeLogo } = props;
 
-  //   Chakra color mode
-  let logoColor = useColorModeValue("navy.700", "white");
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const muted = useColorModeValue("secondaryGray.500", "secondaryGray.400");
+  const logo = largeLogo && (largeLogo[0]?.logoSmImg || largeLogo[0]?.logoLgImg);
 
   return (
     <Flex
       align="center"
-      direction="column"
-      style={{
-        position: "sticky",
-        top: "0",
-        left: "0",
-        background: "#fff",
-      }}
+      justify={openSidebar ? "flex-start" : "center"}
+      gap="11px"
+      px={openSidebar ? "18px" : "0"}
+      py="18px"
+      cursor="pointer"
+      onClick={() => !from && setOpenSidebar(!openSidebar)}
+      userSelect="none"
+      borderBottom="1px solid"
+      borderColor={useColorModeValue("secondaryGray.400", "whiteAlpha.100")}
+      mb="10px"
     >
-      <Flex>
-        {largeLogo && (largeLogo[0]?.logoLgImg || largeLogo[0]?.logoSmImg) ? (
-          <Image
-            style={{ width: "100%", height: "52px" }}
-            src={
-              openSidebar === true
-                ? largeLogo[0]?.logoLgImg
-                : largeLogo[0]?.logoSmImg
-            } // Set the source path of your image
-            alt="Logo" // Set the alt text for accessibility
-            cursor="pointer"
-            onClick={() => !from && setOpenSidebar(!openSidebar)}
-            userSelect="none"
-            my={2}
-          />
-        ) : (
-          <Heading
-            my={4}
-            cursor={"pointer"}
-            onClick={() => !from && setOpenSidebar(!openSidebar)}
-            userSelect={"none"}
+      {logo ? (
+        <Image
+          src={openSidebar ? largeLogo[0]?.logoLgImg || logo : largeLogo[0]?.logoSmImg || logo}
+          alt="Nova CRM"
+          h="32px"
+          style={{ objectFit: "contain" }}
+        />
+      ) : (
+        <>
+          <Flex
+            align="center"
+            justify="center"
+            w="34px"
+            h="34px"
+            borderRadius="10px"
+            bg="linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)"
+            color="white"
+            fontWeight="800"
+            fontSize="sm"
+            flexShrink={0}
+            boxShadow="0 6px 14px -8px rgba(79, 70, 229, 0.9)"
           >
-            {openSidebar === true ? "Nova CRM" : "Nova"}
-          </Heading>
-        )}
-      </Flex>
+            N
+          </Flex>
+          {openSidebar ? (
+            <Flex direction="column" lineHeight="1.1">
+              <Text fontWeight="800" fontSize="15px" color={textColor} letterSpacing="-0.02em">
+                Nova CRM
+              </Text>
+              <Text fontSize="9px" fontWeight="700" letterSpacing="0.12em" textTransform="uppercase" color={muted}>
+                Real Estate
+              </Text>
+            </Flex>
+          ) : null}
+        </>
+      )}
     </Flex>
   );
 }

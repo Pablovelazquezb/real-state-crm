@@ -30,7 +30,7 @@ export default function Dashboard(props) {
   // states and functions
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
-  const [openSidebar, setOpenSidebar] = useState(false);
+  const [openSidebar, setOpenSidebar] = useState(true);
   // const user = JSON.parse(localStorage.getItem("user"))
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
 
@@ -198,7 +198,7 @@ export default function Dashboard(props) {
             routes[i]?.path?.replace("/:id", ""),
           ) !== -1
         ) {
-          return routes[i]?.name;
+          return routes[i]?.label || routes[i]?.name;
         }
       }
     }
@@ -384,16 +384,14 @@ export default function Dashboard(props) {
                 />
               </Box>
             </Portal>
-            <Box pt={{ base: "150px", md: "95px", xl: "95px" }}>
+            <Box pt={{ base: "84px", md: "88px" }}>
               {getRoute() ? (
                 <Box
                   mx="auto"
-                  pe="20px"
                   minH="84vh"
-                  pt="50px"
-                  style={{
-                    padding: openSidebar ? "8px 20px 8px 0px" : "8px 20px",
-                  }}
+                  px={{ base: "16px", md: "28px" }}
+                  pt="24px"
+                  pb="8px"
                 >
                   <Suspense
                     fallback={

@@ -42,7 +42,7 @@ const Index = () => {
   const tableColumns = [
     { Header: "#", accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Email Id",
+      Header: "Correo",
       accessor: "username",
       cell: (cell) => (
         <Link to={`/userView/${cell?.row?.values?._id}`}>
@@ -60,11 +60,11 @@ const Index = () => {
         </Link>
       ),
     },
-    { Header: "First Name", accessor: "firstName" },
-    { Header: "Last Name", accessor: "lastName" },
-    { Header: "Role", accessor: "role" },
+    { Header: "Nombre", accessor: "firstName" },
+    { Header: "Apellidos", accessor: "lastName" },
+    { Header: "Rol", accessor: "role" },
     {
-      Header: "Action",
+      Header: "Acciones",
       accessor: "action",
       isSortable: false,
       center: true,
@@ -162,7 +162,7 @@ const Index = () => {
   return (
     <div>
       <CommonCheckTable
-        title={"Users"}
+        title={"Usuarios"}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -197,7 +197,7 @@ const Index = () => {
             leftIcon={<IoIosArrowBack />}
             ml={2}
           >
-            Back
+            Volver
           </Button>
         }
         AdvanceSearch={

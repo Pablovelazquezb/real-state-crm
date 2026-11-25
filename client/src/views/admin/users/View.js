@@ -5,6 +5,8 @@ import {
   EditIcon,
 } from "@chakra-ui/icons";
 import {
+  Badge,
+  Box,
   Button,
   Flex,
   Grid,
@@ -247,27 +249,47 @@ const View = () => {
             </Grid>
           </Card>
 
-          {data?.role !== "superAdmin" && (
+          {data?.role !== "superAdmin" && !data?.roles?.length ? (
             <Card mt={3}>
-              <RoleTable
-                fetchData={fetchData}
-                columnsData={RoleColumn ?? []}
-                roleModal={roleModal}
-                setRoleModal={setRoleModal}
-                tableData={data?.roles || []}
-                title={"Role"}
-              />
+              <Flex align="center" justify="space-between" gap="12px" wrap="wrap">
+                <Box>
+                  <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
+                    Rol asignado
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    Los permisos se administran desde el módulo Roles.
+                  </Text>
+                </Box>
+                <Badge colorScheme="brand" borderRadius="full" px="12px" py="6px" fontSize="sm" fontWeight="700">
+                  {data?.role || "Sin rol"}
+                </Badge>
+              </Flex>
             </Card>
+          ) : (
+            <>
+              {data?.role !== "superAdmin" && (
+                <Card mt={3}>
+                  <RoleTable
+                    fetchData={fetchData}
+                    columnsData={RoleColumn ?? []}
+                    roleModal={roleModal}
+                    setRoleModal={setRoleModal}
+                    tableData={data?.roles || []}
+                    title={"Role"}
+                  />
+                </Card>
+              )}
+              <RoleModal
+                fetchData={fetchData}
+                isOpen={roleModal}
+                onClose={setRoleModal}
+                columnsData={RoleColumn ?? []}
+                id={param.id}
+                tableData={roleData ?? []}
+                interestRoles={data?.roles?.map((item) => item?._id)}
+              />
+            </>
           )}
-          <RoleModal
-            fetchData={fetchData}
-            isOpen={roleModal}
-            onClose={setRoleModal}
-            columnsData={RoleColumn ?? []}
-            id={param.id}
-            tableData={roleData ?? []}
-            interestRoles={data?.roles?.map((item) => item?._id)}
-          />
 
           <Card mt={3}>
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>

@@ -37,12 +37,10 @@ function App() {
         <Route path="/catalog/*" element={<ClientPortal />} />
 
         {token && user?.role ? (
-          user?.role === "user" ? (
-            <Route path="/*" element={<UserLayout />} />
-          ) : user?.role === "superAdmin" ? (
+          user?.role === "superAdmin" ? (
             <Route path="/*" element={<AdminLayout />} />
           ) : (
-            ""
+            <Route path="/*" element={<UserLayout />} />
           )
         ) : (
           <Route path="/*" element={<AuthLayout />} />

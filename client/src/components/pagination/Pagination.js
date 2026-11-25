@@ -46,26 +46,29 @@ const Pagination = (props) => {
       alignItems="center"
     >
       {pageOptions?.length !== 1 && (
-        <Flex>
-          <Tooltip label="First Page">
+        <Flex gap="6px">
+          <Tooltip label="Primera página" hasArrow>
             <IconButton
               onClick={() => {
                 gotoPage(0);
                 setGopageValue(1);
               }}
               isDisabled={!canPreviousPage}
-              icon={<ArrowLeftIcon h={3} w={3} />}
-              mr={4}
+              icon={<ArrowLeftIcon h={2.5} w={2.5} />}
+              size="sm"
+              variant="outline"
             />
           </Tooltip>
-          <Tooltip label="Previous Page">
+          <Tooltip label="Página anterior" hasArrow>
             <IconButton
               onClick={() => {
                 previousPage();
                 setGopageValue((pre) => pre - 1);
               }}
               isDisabled={!canPreviousPage}
-              icon={<ChevronLeftIcon h={6} w={6} />}
+              icon={<ChevronLeftIcon h={4} w={4} />}
+              size="sm"
+              variant="outline"
             />
           </Tooltip>
         </Flex>
@@ -74,21 +77,24 @@ const Pagination = (props) => {
       <Flex alignItems="center">
         {pageOptions?.length !== 1 && (
           <>
-            <Text flexShrink="0" mr={8}>
-              Page{" "}
-              <Text fontWeight="bold" as="span">
+            <Text flexShrink="0" mr={6} fontSize="sm" color="secondaryGray.600" fontWeight="600">
+              Página{" "}
+              <Text fontWeight="800" as="span" color="secondaryGray.900">
                 {pageIndex + 1}
               </Text>{" "}
-              of{" "}
-              <Text fontWeight="bold" as="span">
+              de{" "}
+              <Text fontWeight="800" as="span" color="secondaryGray.900">
                 {pageOptions?.length}
               </Text>
             </Text>
-            <Text flexShrink="0">Go to page:</Text>{" "}
+            <Text flexShrink="0" fontSize="sm" color="secondaryGray.600">
+              Ir a:
+            </Text>{" "}
             <NumberInput
               ml={2}
-              mr={8}
-              w={28}
+              mr={6}
+              w={20}
+              size="sm"
               min={1}
               max={pageOptions?.length}
               value={gopageValue}
@@ -108,7 +114,9 @@ const Pagination = (props) => {
           </>
         )}
         <Select
-          w={32}
+          w={36}
+          size="sm"
+          borderRadius="10px"
           value={pageSize}
           onChange={(e) => {
             setPageSize(Number(e?.target?.value));
@@ -116,7 +124,7 @@ const Pagination = (props) => {
         >
           {[5, 10, 20, 30, 40, 50]?.map((pageSize) => (
             <option key={pageSize} value={pageSize}>
-              Show {pageSize}
+              {pageSize} por página
             </option>
           ))}
         </Select>

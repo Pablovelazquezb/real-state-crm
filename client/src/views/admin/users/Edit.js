@@ -14,6 +14,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Text,
 } from "@chakra-ui/react";
 import Spinner from "components/spinner/Spinner";
@@ -22,8 +23,9 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { fetchRoles } from "../../../redux/slices/roleSlice";
 import { userSchema } from "schema";
-import { putApi } from "services/api";
+import { getApi, putApi } from "services/api";
 import { useDispatch } from "react-redux";
+import { useEffect } from "react";
 import { setUser } from "../../../redux/slices/localSlice";
 
 const Edit = (props) => {
@@ -34,9 +36,23 @@ const Edit = (props) => {
     lastName: data ? data?.lastName : "",
     username: data ? data?.username : "",
     phoneNumber: data ? data?.phoneNumber : "",
+    role: data?.role || "user",
   };
 
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      const response = await getApi("api/role-access/");
+      if (response?.status === 200 && Array.isArray(response.data)) {
+        setRoles(response.data.map((role) => role.roleName).filter(Boolean));
+      }
+    })();
+  }, [isOpen]);
+
   const user = JSON.parse(window.localStorage.getItem("user"));
+  const canManageRoles = user?.role === "superAdmin";
 
   const formik = useFormik({
     initialValues: initialValues,
@@ -231,6 +247,38 @@ const Edit = (props) => {
                   errors?.phoneNumber}
               </Text>
             </GridItem>
+            {canManageRoles ? (
+            <GridItem colSpan={{ base: 12 }}>
+              <FormLabel
+                display="flex"
+                ms="4px"
+                fontSize="sm"
+                fontWeight="500"
+                mb="8px"
+              >
+                Rol
+              </FormLabel>
+              <Select
+                name="role"
+                value={values?.role}
+                onChange={handleChange}
+                fontSize="sm"
+                borderRadius="16px"
+                fontWeight="500"
+              >
+                <option value="user">Usuario estándar</option>
+                {roles.map((roleName) => (
+                  <option key={roleName} value={roleName}>
+                    {roleName}
+                  </option>
+                ))}
+                <option value="superAdmin">Super Admin (acceso total)</option>
+              </Select>
+              <Text mb="10px" fontSize="xs" color="gray.500">
+                Cambiar el rol actualiza los módulos visibles del usuario.
+              </Text>
+            </GridItem>
+            ) : null}
           </Grid>
         </ModalBody>
         <ModalFooter>
